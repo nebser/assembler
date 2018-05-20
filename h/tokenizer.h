@@ -1,6 +1,7 @@
 #ifndef TOKENIZER_H_
 #define TOKENIZER_H_
 
+#include <string>
 #include <vector>
 #include "token.h"
 
@@ -19,6 +20,32 @@ class Feeder {
 
    private:
     std::string input;
+    int currentIndex;
+};
+
+class TokenStream {
+   public:
+    TokenStream(const std::vector<Token>& tokens)
+        : tokens(tokens), currentIndex(0) {}
+
+    Token next() {
+        if (currentIndex >= tokens.size()) {
+            throw StreamException();
+        }
+        return tokens[currentIndex++];
+    }
+
+    Token peek() const {
+        if (currentIndex >= tokens.size()) {
+            throw StreamException();
+        }
+        return tokens[currentIndex];
+    }
+
+    bool end() const { return currentIndex == tokens.size(); }
+
+   private:
+    std::vector<Token> tokens;
     int currentIndex;
 };
 

@@ -16,7 +16,8 @@ class Token {
         OPEN_BRACKETS,
         CLOSED_BRACKETS,
         LABEL,
-        LINE_DELIMITER
+        LINE_DELIMITER,
+        UNDEFINED
     };
 
     Token(Type type, const std::string& value) : type(type), value(value) {}
@@ -49,12 +50,21 @@ class Token {
                 return "Label identificator";
             case LINE_DELIMITER:
                 return "New line character";
+            case UNDEFINED:
+                return "Undefined token";
         }
+    }
+
+    friend bool operator==(const Token& firstToken, const Token& secondToken) {
+        return firstToken.type == secondToken.type &&
+               firstToken.value == secondToken.value;
     }
 
    private:
     Type type;
     std::string value;
 };
+
+const Token UNDEFINED_TOKEN = Token(Token::UNDEFINED, "");
 
 #endif
