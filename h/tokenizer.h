@@ -1,8 +1,10 @@
 #ifndef TOKENIZER_H_
 #define TOKENIZER_H_
 
+#include <fstream>
 #include <string>
 #include <vector>
+#include "exceptions_a.h"
 #include "token.h"
 
 class Feeder {
@@ -54,6 +56,8 @@ class Tokenizer {
     std::vector<Token> parse(const std::string& input,
                              int lineNumber = 1) const;
 
+    std::vector<Token> parse(std::ifstream& input) const;
+
    private:
     enum State {
         HUNTING,
@@ -64,7 +68,8 @@ class Tokenizer {
         HEX_NUMERIC_DETECTION,
         BIN_NUMERIC_DETECTION,
         BIN_NUMERIC_DETECTED,
-        CLOSED_BRACKETS_DETECTED
+        CLOSED_BRACKETS_DETECTED,
+        LABEL_DETECTION
     };
 
     Token createCharBasedToken(char) const;
@@ -83,6 +88,14 @@ class Tokenizer {
 
     Token createBinaryNumberToken(const std::string& value) const {
         return Token(Token::BIN_NUMBER, value);
+    }
+
+    Token createLabelToken(const std::string& value) const {
+        return Token(Token::LABEL, value);
+    }
+
+    Token createNewLineToken() const {
+        return Token(Token::LINE_DELIMITER, "\n");
     }
 };
 

@@ -1,9 +1,26 @@
 #include "tokenizer.h"
+#include <fstream>
 #include <string>
 #include <vector>
 #include "exceptions_a.h"
+using std::ifstream;
 using std::string;
 using std::vector;
+
+vector<Token> Tokenizer::parse(ifstream& input) const {
+    vector<Token> tokens;
+    try {
+        auto currentLine = 1;
+        for (string line; getline(input, line); currentLine++) {
+            auto t = parse(line, currentLine);
+            tokens.insert(tokens.end(), t.begin(), t.end());
+            tokens.push_back(createNewLineToken());
+        }
+    } catch (const ifstream::failure& f) {
+        throw SystemException("Error while parsing input " + string(f.what()));
+    }
+    return tokens;
+}
 
 vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
     auto feeder = Feeder(input);
@@ -84,6 +101,12 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                             createIdentificatorToken(pendingToken));
                         end = true;
                         break;
+                    case ':':
+                        state = LABEL_DETECTION;
+                        break;
+                    case '.':
+                        throw ParserException(
+                            pendingToken + string(1, character), lineNumber);
                     default:
                         pendingToken += character;
                         break;
@@ -130,8 +153,8 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                         end = true;
                         break;
                     default:
-                        throw ParserException(pendingToken + character,
-                                              lineNumber);
+                        throw ParserException(
+                            pendingToken + string(1, character), lineNumber);
                 }
                 break;
             case ONE_DETECTED:
@@ -182,8 +205,8 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                         end = true;
                         break;
                     default:
-                        throw ParserException(pendingToken + character,
-                                              lineNumber);
+                        throw ParserException(
+                            pendingToken + string(1, character), lineNumber);
                 }
                 break;
             case DEC_NUMERIC_DETECTION:
@@ -226,8 +249,8 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                         end = true;
                         break;
                     default:
-                        throw ParserException(pendingToken + character,
-                                              lineNumber);
+                        throw ParserException(
+                            pendingToken + string(1, character), lineNumber);
                 }
                 break;
             case HEX_NUMERIC_DETECTION:
@@ -273,9 +296,10 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                         end = true;
                         break;
                     default:
-                        throw ParserException(pendingToken + character,
-                                              lineNumber);
+                        throw ParserException(
+                            pendingToken + string(1, character), lineNumber);
                 }
+                break;
             case BIN_NUMERIC_DETECTION:
                 switch (character) {
                     case 'b':
@@ -288,8 +312,8 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                         pendingToken += character;
                         break;
                     default:
-                        throw ParserException(pendingToken + character,
-                                              lineNumber);
+                        throw ParserException(
+                            pendingToken + string(1, character), lineNumber);
                 }
                 break;
             case BIN_NUMERIC_DETECTED:
@@ -310,8 +334,8 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                         end = true;
                         break;
                     default:
-                        throw ParserException(pendingToken + character,
-                                              lineNumber);
+                        throw ParserException(
+                            pendingToken + string(1, character), lineNumber);
                 }
                 break;
             case CLOSED_BRACKETS_DETECTED:
@@ -324,11 +348,35 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                         end = true;
                         break;
                     default:
-                        throw ParserException(string("" + character),
-                                              lineNumber);
+                        throw ParserException(string(1, character), lineNumber);
                 }
+                break;
+            case LABEL_DETECTION:
+                switch (character) {
+                    case ';':
+                    case '\0':
+                        tokens.push_back(createLabelToken(pendingToken));
+                        pendingToken.clear();
+                        end = true;
+                        break;
+                    case ' ':
+                    case '\t':
+                        tokens.push_back(createLabelToken(pendingToken));
+                        pendingToken.clear();
+                        state = HUNTING;
+                        break;
+                    default:
+                        throw ParserException(
+                            pendingToken + ":" + string(1, character),
+                            lineNumber);
+                }
+                break;
+            default:
+                throw SystemException("Invalid state detected");
         }
     }
+
+    return tokens;
 }
 
 Token Tokenizer::createCharBasedToken(char value) const {
@@ -344,4 +392,5 @@ Token Tokenizer::createCharBasedToken(char value) const {
         case ',':
             return Token(Token::COMMA, ",");
     }
+    return UNDEFINED_TOKEN;
 }
