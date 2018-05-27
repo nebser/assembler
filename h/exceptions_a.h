@@ -4,12 +4,12 @@
 #include <string>
 #include "utils.h"
 
-class AssemblerExceptions {
+class AssemblerException {
    public:
-    virtual std::string error() const;
+    virtual std::string error() const = 0;
 };
 
-class ParserException {
+class ParserException : public AssemblerException {
    public:
     ParserException(const std::string& token, int lineNumber)
         : token(token), lineNumber(lineNumber) {}
@@ -24,9 +24,19 @@ class ParserException {
     int lineNumber;
 };
 
-class StreamException {
+class StreamException : public AssemblerException {
    public:
     std::string error() const { return "End of the stream reached"; }
-}
+};
+
+class SystemException : public AssemblerException {
+   public:
+    SystemException(const std::string& error) : errorReason(error) {}
+
+    std::string error() const { return "System error: " + errorReason; }
+
+   private:
+    std::string errorReason;
+};
 
 #endif
