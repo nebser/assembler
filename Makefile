@@ -3,7 +3,7 @@ FLAGS=-std=c++11
 PATH=./h
 
 main:	
-	$(CC) ./cpp/*.cpp $(FLAGS) -o assembler -I$(PATH)
+	$(CC) ./cpp/*.cpp $(FLAGS) -o assembler.out -I$(PATH)
 
 clean:	
-	rm assembler
+	rm assembler.out
