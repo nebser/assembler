@@ -14,7 +14,7 @@ class ParserException : public AssemblerException {
     ParserException(const std::string& token, int lineNumber)
         : token(token), lineNumber(lineNumber) {}
 
-    std::string error() const {
+    std::string error() const override {
         return "Invalid token " + token + " at line " +
                Utils::convertToString(lineNumber);
     }
@@ -26,14 +26,16 @@ class ParserException : public AssemblerException {
 
 class StreamException : public AssemblerException {
    public:
-    std::string error() const { return "End of the stream reached"; }
+    std::string error() const override { return "End of the stream reached"; }
 };
 
 class SystemException : public AssemblerException {
    public:
     SystemException(const std::string& error) : errorReason(error) {}
 
-    std::string error() const { return "System error: " + errorReason; }
+    std::string error() const override {
+        return "System error: " + errorReason;
+    }
 
    private:
     std::string errorReason;

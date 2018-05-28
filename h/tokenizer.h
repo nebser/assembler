@@ -44,6 +44,8 @@ class TokenStream {
         return tokens[currentIndex];
     }
 
+    void reset() { currentIndex = 0; }
+
     bool end() const { return currentIndex == tokens.size(); }
 
    private:
