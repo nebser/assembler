@@ -63,6 +63,6 @@ class NoSectionDefined : public AssemblerException {
 
    private:
     std::string symbol;
-}
+};
 
 #endif

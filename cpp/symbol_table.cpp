@@ -16,7 +16,7 @@ void SymbolTable::putSection(const string& name) {
 }
 
 void SymbolTable::putSymbol(const string& name, int address, Scope scope,
-                            int section = -1) {
+                            int section) {
     if (section == -1) {
         if (lastSection == -1) {
             throw NoSectionDefined(name);
