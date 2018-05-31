@@ -41,4 +41,28 @@ class SystemException : public AssemblerException {
     std::string errorReason;
 };
 
+class SymbolAlreadyDefinedException : public AssemblerException {
+   public:
+    SymbolAlreadyDefinedException(const std::string& symbol) : symbol(symbol) {}
+
+    std::string error() const override {
+        return "Symbol " + symbol + " already defined";
+    }
+
+   private:
+    std::string symbol;
+};
+
+class NoSectionDefined : public AssemblerException {
+   public:
+    NoSectionDefined(const std::string& symbol) : symbol(symbol) {}
+
+    std::string error() const override {
+        return "No section defined before symbol " + symbol;
+    }
+
+   private:
+    std::string symbol;
+}
+
 #endif
