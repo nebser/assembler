@@ -63,7 +63,7 @@ bool SymbolTable::sectionExists(const string& name) const {
 
 void SymbolTable::updateSectionSize(const string& sectionName,
                                     int sectionSize) {
-    for (auto& section : sections) {
+    for (auto&& section : sections) {
         if (section.name == sectionName) {
             section.size = sectionSize;
             return;

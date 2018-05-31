@@ -2,6 +2,7 @@
 #define UTILS_H_
 
 #include <sstream>
+#include <string>
 
 class Utils {
    public:
@@ -10,5 +11,7 @@ class Utils {
         out << input;
         return out.str();
     }
+
+    static std::string uppercaseString(const std::string&);
 };
 #endif
