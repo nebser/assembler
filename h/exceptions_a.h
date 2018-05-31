@@ -65,4 +65,14 @@ class NoSectionDefined : public AssemblerException {
     std::string symbol;
 };
 
+class UnknownCommandException : public AssemblerException {
+   public:
+    UnknownCommandException(const std::string& command) : command(command) {}
+
+    std::string error() const override { return "Unknown command: " + command; }
+
+   private:
+    std::string command;
+};
+
 #endif
