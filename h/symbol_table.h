@@ -1,6 +1,7 @@
 #ifndef SYMBOL_TABLE_H_
 #define SYMBOL_TABLE_H_
 
+#include <iostream>
 #include <string>
 #include <vector>
 
@@ -13,16 +14,24 @@ class SymbolTable {
         int section;
         Scope scope;
         int address;
+        unsigned int number;
 
-        Symbol(const std::string& name, int section, Scope scope, int address)
-            : name(name), section(section), scope(scope), address(address) {}
+        Symbol(const std::string& name, int section, Scope scope, int address,
+               unsigned int number)
+            : name(name),
+              section(section),
+              scope(scope),
+              address(address),
+              number(number) {}
     };
 
     struct Section {
         std::string name;
         int size;
+        int number;
 
-        Section(const std::string& name, int size) : name(name), size(size) {}
+        Section(const std::string& name, int size, unsigned int number)
+            : name(name), size(size), number(number) {}
     };
 
     SymbolTable() { lastSection = -1; }
@@ -36,6 +45,9 @@ class SymbolTable {
     bool sectionExists(const std::string& name) const;
 
     void updateSectionSize(const std::string& sectionName, int sectionSize);
+
+    friend std::ostream& operator<<(std::ostream& os,
+                                    const SymbolTable& symbolTable);
 
    private:
     std::vector<Symbol> symbols;

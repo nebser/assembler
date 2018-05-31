@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 #include "exceptions_a.h"
+using std::endl;
+using std::ostream;
 using std::string;
 using std::vector;
 
@@ -11,7 +13,7 @@ void SymbolTable::putSection(const string& name) {
             throw SymbolAlreadyDefinedException(section.name);
         }
     }
-    sections.push_back(Section(name, 0));
+    sections.push_back(Section(name, 0, sections.size()));
     lastSection++;
 }
 
@@ -28,7 +30,7 @@ void SymbolTable::putSymbol(const string& name, int address, Scope scope,
             throw SymbolAlreadyDefinedException(symbol.name);
         }
     }
-    symbols.push_back(Symbol(name, address, scope, section));
+    symbols.push_back(Symbol(name, address, scope, section, symbols.size()));
 }
 
 bool SymbolTable::updateScope(const string& name, Scope newScope) {
@@ -67,4 +69,19 @@ void SymbolTable::updateSectionSize(const string& sectionName,
             return;
         }
     }
+}
+
+ostream& operator<<(ostream& os, const SymbolTable& symbolTable) {
+    os << "#tabela simbola" << endl;
+    os << "#redni broj\ttip\time\tsek\tvelicina|vrednost\tvidljivost" << endl;
+    for (auto&& section : symbolTable.sections) {
+        os << section.number << "\tSEK\t" << section.name << '\t'
+           << section.size << "\tL" << endl;
+    }
+    auto numOfSections = symbolTable.sections.size();
+    for (auto&& symbol : symbolTable.symbols) {
+        os << (symbol.number + numOfSections) << "\tSIM\t" << symbol.name
+           << '\t' << symbol.address << '\t' << symbol.scope << endl;
+    }
+    return os;
 }
