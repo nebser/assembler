@@ -3,36 +3,24 @@
 
 #include <string>
 #include <vector>
+#include "command.h"
+#include "section.h"
 #include "tokenizer.h"
-
-struct Command {
-    enum Type {
-        GLOBAL_DIR,
-        INSTRUCTION,
-        END_DIR,
-        DEFINITION,
-        SECTION,
-        ALIGN_DIR,
-        SKIP_DIR,
-        LABEL
-    };
-
-    std::string name;
-    Type type;
-
-    Command(const std::string& name, Type type) : name(name), type(type) {}
-};
 
 class Recognizer {
    public:
     Recognizer();
     Command recognizeCommand(TokenStream&) const;
+    Section* recognizeSection(const Command& comm, TokenStream&) const;
+    std::vector<std::string> recognizeGlobalSymbols(TokenStream&) const;
 
    private:
     struct SectionSpecification {
         std::string name;
+        Section::Type type;
 
-        SectionSpecification(const std::string& name) : name(name) {}
+        SectionSpecification(const std::string& name, Section::Type type)
+            : name(name), type(type) {}
     };
 
     struct InstructionSpecification {

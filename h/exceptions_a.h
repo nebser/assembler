@@ -75,4 +75,35 @@ class UnknownCommandException : public AssemblerException {
     std::string command;
 };
 
+class InvalidInstructionSequence : public AssemblerException {
+   public:
+    std::string error() const override {
+        return "Invalid instruction sequence";
+    }
+};
+
+class InvalidCommand : public AssemblerException {
+   public:
+    InvalidCommand(const std::string& section, const std::string& instruction)
+        : section(section), instruction(instruction) {}
+
+    std::string error() const override {
+        return "Invalid instruction " + instruction + " for section " + section;
+    }
+
+   private:
+    std::string section;
+    std::string instruction;
+};
+
+class DecodingException : public AssemblerException {
+   public:
+    DecodingException(const std::string& text) : text(text) {}
+
+    std::string error() const override { return "DecodingException: " + text; }
+
+   private:
+    std::string text;
+};
+
 #endif

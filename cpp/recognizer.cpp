@@ -1,5 +1,7 @@
 #include "recognizer.h"
+#include "command.h"
 #include "exceptions_a.h"
+#include "section.h"
 #include "tokenizer.h"
 #include "utils.h"
 
@@ -9,10 +11,13 @@ using std::string;
 using std::vector;
 
 Recognizer::Recognizer() {
-    sectionSpecifications.push_back(SectionSpecification(".data"));
-    sectionSpecifications.push_back(SectionSpecification(".text"));
-    sectionSpecifications.push_back(SectionSpecification(".bss"));
-    sectionSpecifications.push_back(SectionSpecification(".rodata"));
+    sectionSpecifications.push_back(
+        SectionSpecification(".data", Section::DATA));
+    sectionSpecifications.push_back(
+        SectionSpecification(".text", Section::TEXT));
+    sectionSpecifications.push_back(SectionSpecification(".bss", Section::BSS));
+    sectionSpecifications.push_back(
+        SectionSpecification(".rodata", Section::RODATA));
 
     definitionSpecifications.push_back(DefinitionSpecification(".char", 1));
     definitionSpecifications.push_back(DefinitionSpecification(".word", 2));
@@ -306,4 +311,45 @@ bool Recognizer::isInstruction(const Token& token) const {
         }
     }
     return false;
+}
+
+Section* Recognizer::recognizeSection(const Command& comm,
+                                      TokenStream& tokenStream) const {
+    auto t = tokenStream.next();
+    if (t.getType() != Token::LINE_DELIMITER) {
+        throw DecodingException("Invalid character " + t.getValue() +
+                                " after section definition");
+    }
+    for (auto&& ss : sectionSpecifications) {
+        if (ss.name == comm.name ||
+            Utils::uppercaseString(ss.name) == comm.name) {
+            return new Section(comm.name, ss.type);
+        }
+    }
+    throw DecodingException("Unknown section name " + comm.name);
+}
+
+vector<string> Recognizer::recognizeGlobalSymbols(
+    TokenStream& tokenStream) const {
+    auto firstToken = tokenStream.next();
+    auto secondToken = tokenStream.next();
+    vector<string> symbols;
+    while (true) {
+        if (firstToken.getType() != Token::IDENTIFICATOR) {
+            throw DecodingException("Invalid character " +
+                                    firstToken.getValue() +
+                                    " in global symbol decl");
+        }
+        symbols.push_back(firstToken.getValue());
+        if (secondToken.getType() == Token::LINE_DELIMITER) {
+            return symbols;
+        }
+        if (secondToken.getType() != Token::COMMA) {
+            throw DecodingException("Invalid character " +
+                                    secondToken.getValue() +
+                                    " in global symbol declaration");
+        }
+        firstToken = tokenStream.next();
+        secondToken = tokenStream.next();
+    }
 }
