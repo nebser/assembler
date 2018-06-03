@@ -3,6 +3,8 @@
 
 #include <fstream>
 #include <string>
+#include "recognizer.h"
+#include "symbol_table.h"
 #include "tokenizer.h"
 
 class Assembler {
@@ -18,8 +20,11 @@ class Assembler {
                       const std::string& outputFileName);
 
    private:
-    void firstPass(TokenStream&);
+    SymbolTable firstPass(TokenStream&, const Recognizer& recognizer) const;
     void secondPass(TokenStream&);
+
+    bool isSequenceValid(const Command& previousCommand,
+                         const Command& currenctCommand) const;
 };
 
 #endif
