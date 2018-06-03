@@ -13,7 +13,8 @@ struct Command {
         DEFINITION,
         SECTION,
         ALIGN_DIR,
-        SKIP_DIR
+        SKIP_DIR,
+        LABEL
     };
 
     std::string name;
@@ -36,10 +37,9 @@ class Recognizer {
 
     struct InstructionSpecification {
         std::string name;
-        std::string opcode;
+        unsigned char opcode;
 
-        InstructionSpecification(const std::string& name,
-                                 const std::string& opcode)
+        InstructionSpecification(const std::string& name, unsigned char opcode)
             : name(name), opcode(opcode) {}
     };
 
@@ -57,9 +57,14 @@ class Recognizer {
     bool isSkipDirective(const Token&) const;
     bool isSection(const Token&) const;
     bool isDefinition(const Token&) const;
+    bool isInstruction(const Token&) const;
 
     std::vector<SectionSpecification> sectionSpecifications;
-    std::vector<InstructionSpecification> instructionSpecifications;
+    std::vector<InstructionSpecification> singleAddressInstructionSpecs;
+    std::vector<InstructionSpecification> doubleAddressInstructionSpecs;
+    std::vector<InstructionSpecification> noAddressInstructionSpecs;
+    std::vector<InstructionSpecification> retInstructionSpecs;
+    std::vector<InstructionSpecification> jmpInstructionSpecs;
     std::vector<DefinitionSpecification> definitionSpecifications;
 };
 
