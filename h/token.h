@@ -1,7 +1,9 @@
 #ifndef TOKEN_H_
 #define TOKEN_H_
 
+#include <iostream>
 #include <string>
+#include "exceptions_a.h"
 
 class Token {
    public:
@@ -25,6 +27,20 @@ class Token {
     Type getType() const { return type; }
 
     std::string getValue() const { return value; }
+
+    int getIntValue() const {
+        switch (type) {
+            case BIN_NUMBER:
+                return std::stoi(value, nullptr, 2);
+            case HEX_NUMBER:
+                return std::stoi(value, nullptr, 16);
+            case DEC_NUMBER:
+                return std::stoi(value, nullptr);
+            default:
+                throw SystemException("Can't convert token of type " +
+                                      getTypeDescription() + " to int");
+        }
+    }
 
     std::string getTypeDescription() const {
         switch (type) {
