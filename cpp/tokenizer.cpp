@@ -64,6 +64,7 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                     case '[':
                     case ']':
                     case ',':
+                    case '*':
                         tokens.push_back(createCharBasedToken(character));
                         break;
                     default:
@@ -391,6 +392,8 @@ Token Tokenizer::createCharBasedToken(char value) const {
             return Token(Token::CLOSED_BRACKETS, "]");
         case ',':
             return Token(Token::COMMA, ",");
+        case '*':
+            return Token(Token::LOCATION_VALUE_QUANT, "*");
     }
     return UNDEFINED_TOKEN;
 }

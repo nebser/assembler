@@ -19,6 +19,7 @@ class Token {
         CLOSED_BRACKETS,
         LABEL,
         LINE_DELIMITER,
+        LOCATION_VALUE_QUANT,
         UNDEFINED
     };
 
