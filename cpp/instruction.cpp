@@ -3,7 +3,7 @@
 #include "tokenizer.h"
 using std::ostream;
 
-Definition* Definition::decode(TokenStream& tokenStream) {
+WritableDirective* Definition::decode(TokenStream& tokenStream) {
     auto firstToken = tokenStream.next();
     if (firstToken.getType() == Token::LINE_DELIMITER) {
         return this;
@@ -30,25 +30,49 @@ Definition* Definition::decode(TokenStream& tokenStream) {
 
 int Definition::write(ostream& os, int currentColumn) const {
     if (datas.size() == 0) {
-        for (unsigned char i = 0; i < multiplier; i++) {
-            unsigned char d = 0;
-            os << std::hex << d;
-            currentColumn++;
-            if (currentColumn % 16) {
-                os << std::endl;
-            }
-        }
+        return Utils::writeData(os, 0, multiplier, currentColumn);
     } else {
         for (auto&& data : datas) {
-            for (unsigned char i = 0; i < multiplier; i++) {
-                unsigned char d = (data >> i) & 0xFF;
-                os << std::hex << d;
-                currentColumn++;
-                if (currentColumn % 16) {
-                    os << std::endl;
-                }
-            }
+            currentColumn =
+                Utils::writeData(os, data, multiplier, currentColumn);
         }
     }
     return currentColumn;
+}
+
+WritableDirective* SkipDirective::decode(TokenStream& tokenStream) {
+    auto firstToken = tokenStream.next();
+    auto type = firstToken.getType();
+    if (type != Token::HEX_NUMBER && type != Token::BIN_NUMBER &&
+        type != Token::DEC_NUMBER) {
+        throw DecodingException(
+            "Size parameter of the skip directive must be a number");
+    }
+    auto secondToken = tokenStream.next();
+    if (secondToken.getType() == Token::LINE_DELIMITER) {
+        return this;
+    }
+    if (secondToken.getType() != Token::COMMA) {
+        throw DecodingException(
+            "Format of the .skip directive must be .skip size, [fill]");
+    }
+    size = firstToken.getIntValue();
+    firstToken = tokenStream.next();
+    secondToken = tokenStream.next();
+    if (type != Token::HEX_NUMBER && type != Token::BIN_NUMBER &&
+        type != Token::DEC_NUMBER) {
+        throw DecodingException(
+            "Fill parameter of the skip directive must be a number");
+    }
+    if (secondToken.getType() == Token::LINE_DELIMITER) {
+        return this;
+    }
+    throw DecodingException(
+        "Format of the .skip directive must be .skip size, [fill]");
+}
+
+int SkipDirective::write(ostream& os, int currentColumn) const {
+    for (int i = 0; i < size; i++) {
+        Utils::writeData(os, fill, 1, currentColumn);
+    }
 }

@@ -20,12 +20,18 @@ class Instruction : public WritableData {
     virtual const std::string& getName() const = 0;
 };
 
-class Definition : public WritableData {
+class WritableDirective : public WritableData {
+   public:
+    virtual WritableDirective* decode(TokenStream&);
+    virtual int write(std::ostream&, int currentColumn) const;
+};
+
+class Definition : public WritableDirective {
    public:
     Definition(const std::string& name, int multiplier)
         : name(name), multiplier(multiplier) {}
 
-    Definition* decode(TokenStream&);
+    WritableDirective* decode(TokenStream&) override;
 
     int write(std::ostream&, int currentColumn) const override;
 
@@ -37,6 +43,21 @@ class Definition : public WritableData {
     std::string name;
     int multiplier;
     std::vector<int> datas;
+};
+
+class SkipDirective : public WritableDirective {
+   public:
+    SkipDirective() { fill = 0; }
+
+    WritableDirective* decode(TokenStream&) override;
+
+    int write(std::ostream&, int currentColumn) const override;
+
+    int getSize() const override { return size; }
+
+   private:
+    int size;
+    char fill;
 };
 
 #endif
