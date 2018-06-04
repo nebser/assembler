@@ -1,6 +1,7 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <iostream>
 #include <sstream>
 #include <string>
 
@@ -13,5 +14,7 @@ class Utils {
     }
 
     static std::string uppercaseString(const std::string&);
+
+    static int writeData(std::ostream&, int data, int size, int currentColumn);
 };
 #endif
