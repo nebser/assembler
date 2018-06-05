@@ -15,14 +15,14 @@ class WritableData {
 
 class Instruction : public WritableData {
    public:
-    virtual Instruction* decode(TokenStream&) = 0;
-    virtual Instruction* evaluate(TokenStream&, const SymbolTable&) = 0;
+    virtual Instruction& decode(TokenStream&) = 0;
+    virtual Instruction& evaluate(const SymbolTable&) = 0;
     virtual const std::string& getName() const = 0;
 };
 
 class WritableDirective : public WritableData {
    public:
-    virtual WritableDirective* decode(TokenStream&);
+    virtual WritableDirective& decode(TokenStream&);
     virtual int write(std::ostream&, int currentColumn) const;
 };
 
@@ -31,7 +31,7 @@ class Definition : public WritableDirective {
     Definition(const std::string& name, int multiplier)
         : name(name), multiplier(multiplier) {}
 
-    WritableDirective* decode(TokenStream&) override;
+    WritableDirective& decode(TokenStream&) override;
 
     int write(std::ostream&, int currentColumn) const override;
 
@@ -49,7 +49,7 @@ class SkipDirective : public WritableDirective {
    public:
     SkipDirective() { fill = 0; }
 
-    WritableDirective* decode(TokenStream&) override;
+    WritableDirective& decode(TokenStream&) override;
 
     int write(std::ostream&, int currentColumn) const override;
 
@@ -58,6 +58,28 @@ class SkipDirective : public WritableDirective {
    private:
     int size;
     char fill;
+};
+
+class AlignDirective : public WritableData {
+   public:
+    AlignDirective() {
+        fill = 0;
+        maxPadd = int((unsigned int)~0 >> 1);
+    }
+
+    AlignDirective& decode(TokenStream&);
+
+    AlignDirective& evaluate(int currentLocationCounter);
+
+    int write(std::ostream&, int currentColumn) const override;
+
+    int getSize() const override { return size; }
+
+   private:
+    int padd;
+    int fill;
+    int maxPadd;
+    int size;
 };
 
 #endif
