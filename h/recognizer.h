@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "command.h"
+#include "instruction.h"
 #include "section.h"
 #include "tokenizer.h"
 
@@ -13,6 +14,8 @@ class Recognizer {
     Command recognizeCommand(TokenStream&) const;
     Section* recognizeSection(const Command& comm, TokenStream&) const;
     std::vector<std::string> recognizeGlobalSymbols(TokenStream&) const;
+    Definition recognizeDefinition(const Command&) const;
+    Instruction* recognizeInstruction(const Command&) const;
 
    private:
     struct SectionSpecification {

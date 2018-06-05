@@ -1,6 +1,7 @@
 #include "recognizer.h"
 #include "command.h"
 #include "exceptions_a.h"
+#include "instruction.h"
 #include "section.h"
 #include "tokenizer.h"
 #include "utils.h"
@@ -352,4 +353,18 @@ vector<string> Recognizer::recognizeGlobalSymbols(
         firstToken = tokenStream.next();
         secondToken = tokenStream.next();
     }
+}
+
+Definition Recognizer::recognizeDefinition(const Command& comm) const {
+    if (comm.type != Command::DEFINITION) {
+        throw SystemException(
+            "Invalid command type for definition for command " + comm.name);
+    }
+    for (auto&& d : definitionSpecifications) {
+        if (d.name == comm.name ||
+            Utils::uppercaseString(d.name) == comm.name) {
+            return Definition(d.name, d.size);
+        }
+    }
+    throw SystemException("Unknown definition name " + comm.name);
 }
