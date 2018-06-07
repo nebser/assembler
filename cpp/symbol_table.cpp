@@ -7,6 +7,9 @@ using std::ostream;
 using std::string;
 using std::vector;
 
+const int SymbolTable::UNKNOWN_SECTION = -1;
+const int SymbolTable::UNKNOWN_ADDRESS = -1;
+
 void SymbolTable::putSection(const string& name) {
     for (auto&& section : sections) {
         if (section.name == name) {
@@ -19,7 +22,7 @@ void SymbolTable::putSection(const string& name) {
 
 void SymbolTable::putSymbol(const string& name, int address, Scope scope,
                             int section) {
-    if (section == -1) {
+    if (section == -2) {
         if (lastSection == -1) {
             throw NoSectionDefined(name);
         }

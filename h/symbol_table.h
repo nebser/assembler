@@ -9,6 +9,9 @@ class SymbolTable {
    public:
     enum Scope { GLOBAL, LOCAL };
 
+    static const int UNKNOWN_SECTION;
+    static const int UNKNOWN_ADDRESS;
+
     struct Symbol {
         std::string name;
         int section;
@@ -38,7 +41,7 @@ class SymbolTable {
 
     void putSection(const std::string& name);
     void putSymbol(const std::string& name, int address, Scope scope = LOCAL,
-                   int section = -1);
+                   int section = -2);
 
     bool updateScope(const std::string& name, Scope newScope);
     bool symbolExists(const std::string& name) const;
