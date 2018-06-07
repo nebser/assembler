@@ -1,7 +1,10 @@
 #include "instruction.h"
 #include <iostream>
+#include <vector>
+#include "token.h"
 #include "tokenizer.h"
 using std::ostream;
+using std::vector;
 
 WritableDirective& Definition::decode(TokenStream& tokenStream) {
     auto firstToken = tokenStream.next();
@@ -59,7 +62,7 @@ WritableDirective& SkipDirective::decode(TokenStream& tokenStream) {
     }
     firstToken = tokenStream.next();
     secondToken = tokenStream.next();
-    auto type = firstToken.getType();
+    type = firstToken.getType();
     if (type != Token::HEX_NUMBER && type != Token::BIN_NUMBER &&
         type != Token::DEC_NUMBER) {
         throw DecodingException(
@@ -141,6 +144,7 @@ AlignDirective& AlignDirective::evaluate(int currentLocationCounter) {
     }
     auto calculatedPad = newLocationCounter - currentLocationCounter;
     size = calculatedPad > maxPadd ? 0 : calculatedPad;
+    return *this;
 }
 
 int AlignDirective::write(ostream& os, int currentColumn) const {
@@ -149,4 +153,80 @@ int AlignDirective::write(ostream& os, int currentColumn) const {
         newColumn = Utils::writeData(os, fill, 1, newColumn);
     }
     return newColumn;
+}
+
+Instruction& SingleAddressInstruction::decode(TokenStream& tokenStream) {
+    vector<Token> operandTokens;
+    while (!tokenStream.end()) {
+        auto t = tokenStream.next();
+        if (t.getType() == Token::LINE_DELIMITER) {
+            operand = Operand(operandTokens);
+            return *this;
+        }
+        operandTokens.push_back(t);
+    }
+    throw DecodingException("Invalid end of instruction " + name);
+}
+
+int SingleAddressInstruction::write(ostream& os, int currentColumn) const {
+    auto operandCode = operand.getCode();
+    auto operandSize = operand.getSize();
+    unsigned int data =
+        opcode << (operandSize + 5) | (operandCode << operandSize);
+    if (operandSize > 5) {
+        data = (data & 0xFFE00000) | (operandCode & ~0xFF);
+    }
+    return Utils::writeData(os, data, getSize() / 8, currentColumn);
+}
+
+Instruction& DoubleAddressInstruction::decode(TokenStream& tokenStream) {
+    vector<Token> dstTokens;
+    vector<Token> srcTokens;
+    while (!tokenStream.end()) {
+        auto t = tokenStream.next();
+        if (t.getType() == Token::COMMA) {
+            dst = Operand(dstTokens);
+            break;
+        }
+        dstTokens.push_back(t);
+    }
+    if (tokenStream.end()) {
+        throw DecodingException("Invalid dst operand for instruction " + name);
+    }
+    while (!tokenStream.end()) {
+        auto t = tokenStream.next();
+        if (t.getType() == Token::LINE_DELIMITER) {
+            src = Operand(srcTokens);
+            if (src.getSize() + dst.getSize() > 26) {
+                throw DecodingException(
+                    "Only one operand can have additional data for operands");
+            }
+            return *this;
+        }
+        srcTokens.push_back(t);
+    }
+    throw DecodingException("Invalid src operand for instruction " + name);
+}
+
+int DoubleAddressInstruction::write(ostream& os, int currentColumn) const {
+    auto dstCode = dst.getCode();
+    auto dstSize = dst.getSize();
+    auto srcCode = src.getCode();
+    auto srcSize = src.getSize();
+    unsigned int data = opcode << (dstCode + 5) |
+                        (dstCode << (dstSize > srcSize ? dstSize : srcSize));
+    auto size = 4;
+    if (dstSize > 5) {
+        data = opcode << (dstSize + srcSize) | ((dstCode & ~0xFF) << 21) |
+               srcCode << 16 | (dstCode & 0xFF);
+    } else {
+        if (srcSize > 5) {
+            data = opcode << (dstSize + srcSize) | dstCode << 21 |
+                   ((srcCode & ~0xFF) << 16) | (srcCode & 0xFF);
+        } else {
+            data = opcode << (dstSize + srcSize) | dstCode << dstSize | srcCode;
+            size = 2;
+        }
+    }
+    return Utils::writeData(os, data, size, currentColumn);
 }
