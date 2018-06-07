@@ -67,6 +67,8 @@ class Token {
                 return "Label identificator";
             case LINE_DELIMITER:
                 return "New line character";
+            case LOCATION_VALUE_QUANT:
+                return "Location value quantificator (*)";
             case UNDEFINED:
                 return "Undefined token";
         }
