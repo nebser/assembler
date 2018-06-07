@@ -27,4 +27,5 @@ int Utils::writeData(ostream& os, int data, int size, int currentColumn) {
             os << std::endl;
         }
     }
+    return currentColumn;
 }
