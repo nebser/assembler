@@ -78,13 +78,41 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
             case Command::LABEL:
                 symbolTable.putSymbol(command.name, locationCounter);
                 break;
-            
+            case Command::DEFINITION:
+                locationCounter += recognizer.recognizeDefinition(command)
+                                       .decode(tokenStream)
+                                       .getSize();
+                break;
+            case Command::ALIGN_DIR:
+                locationCounter += AlignDirective()
+                                       .decode(tokenStream)
+                                       .evaluate(locationCounter)
+                                       .getSize();
+                break;
+            case Command::SKIP_DIR:
+                locationCounter +=
+                    SkipDirective().decode(tokenStream).getSize();
+                break;
+            case Command::INSTRUCTION: {
+                auto instruction = recognizer.recognizeInstruction(command);
+                locationCounter += instruction->decode(tokenStream).getSize();
+                delete instruction;
+            }
+            default:
+                throw SystemException("Unknown command type");
         }
         previousCommand = command;
     }
 
     if (!endDetected) {
         throw DecodingException("No .end directive detected");
+    }
+
+    for (auto&& g : globalSymbols) {
+        if (!symbolTable.updateScope(g, SymbolTable::GLOBAL)) {
+            symbolTable.putSymbol(g, SymbolTable::UNKNOWN_ADDRESS,
+                                  SymbolTable::GLOBAL);
+        }
     }
     return symbolTable;
 }
