@@ -368,3 +368,29 @@ Definition Recognizer::recognizeDefinition(const Command& comm) const {
     }
     throw SystemException("Unknown definition name " + comm.name);
 }
+
+Instruction* Recognizer::recognizeInstruction(const Command& comm) const {
+    if (comm.type != Command::INSTRUCTION) {
+        throw SystemException(
+            "Invalid command type for instruction for command " + comm.name);
+    }
+    for (auto&& sais : singleAddressInstructionSpecs) {
+        if (sais.name == comm.name ||
+            Utils::uppercaseString(sais.name) == comm.name) {
+            return new SingleAddressInstruction(sais.name, sais.opcode);
+        }
+    }
+    for (auto&& dais : doubleAddressInstructionSpecs) {
+        if (dais.name == comm.name ||
+            Utils::uppercaseString(dais.name) == comm.name) {
+            return new DoubleAddressInstruction(dais.name, dais.opcode);
+        }
+    }
+    for (auto&& nais : noAddressInstructionSpecs) {
+        if (nais.name == comm.name ||
+            Utils::uppercaseString(nais.name) == comm.name) {
+            return new NoAddressInstruction(nais.name, nais.opcode);
+        }
+    }
+    throw SystemException("No instruction found with name " + comm.name);
+}
