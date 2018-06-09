@@ -74,6 +74,14 @@ void SymbolTable::updateSectionSize(const string& sectionName,
     }
 }
 
+int SymbolTable::getCummulativeSectionSize() const {
+    auto sum = 0;
+    for (auto&& section : sections) {
+        sum += section.size;
+    }
+    return sum;
+}
+
 ostream& operator<<(ostream& os, const SymbolTable& symbolTable) {
     os << "#tabela simbola" << endl;
     os << "#rbr\ttip\time\tsek\tvel|vr\tvid" << endl;

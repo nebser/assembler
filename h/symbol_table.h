@@ -48,6 +48,7 @@ class SymbolTable {
     bool sectionExists(const std::string& name) const;
 
     void updateSectionSize(const std::string& sectionName, int sectionSize);
+    int getCummulativeSectionSize() const;
 
     friend std::ostream& operator<<(std::ostream& os,
                                     const SymbolTable& symbolTable);
