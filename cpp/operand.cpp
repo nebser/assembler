@@ -98,8 +98,7 @@ void Operand::determineOperand(const vector<Token>& tokens) {
                 constantDataRaw = tokens[2];
                 return;
             }
-            if (tokens.size() == 1 ||
-                tokens[0].getType() != Token::IDENTIFICATOR) {
+            if (tokens.size() != 1) {
                 throw DecodingException("Invalid operand " +
                                         joinTokens(tokens));
             }
