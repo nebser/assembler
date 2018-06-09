@@ -77,9 +77,18 @@ class UnknownCommandException : public AssemblerException {
 
 class InvalidInstructionSequence : public AssemblerException {
    public:
+    InvalidInstructionSequence(const std::string& instruction1,
+                               const std::string& instruction2)
+        : instruction1(instruction1), instruction2(instruction2) {}
+
     std::string error() const override {
-        return "Invalid instruction sequence";
+        return "Invalid instruction sequence " + instruction1 + " " +
+               instruction2;
     }
+
+   private:
+    std::string instruction1;
+    std::string instruction2;
 };
 
 class InvalidCommand : public AssemblerException {
@@ -101,6 +110,16 @@ class DecodingException : public AssemblerException {
     DecodingException(const std::string& text) : text(text) {}
 
     std::string error() const override { return "DecodingException: " + text; }
+
+   private:
+    std::string text;
+};
+
+class MemoryException : public AssemblerException {
+   public:
+    MemoryException(const std::string& text) : text(text) {}
+
+    std::string error() const override { return "Memory Exception: " + text; }
 
    private:
     std::string text;

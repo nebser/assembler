@@ -9,6 +9,7 @@
 
 class Assembler {
    public:
+    static const int MEMORY_SIZE;
     Assembler() = default;
 
     Assembler(const Assembler&) = delete;
@@ -17,10 +18,11 @@ class Assembler {
     Assembler& operator=(Assembler&&) = delete;
 
     void assembleFile(const std::string& inputFileName,
-                      const std::string& outputFileName);
+                      const std::string& outputFileName, int startAddress);
 
    private:
-    SymbolTable firstPass(TokenStream&, const Recognizer& recognizer) const;
+    SymbolTable firstPass(TokenStream&, const Recognizer& recognizer,
+                          int startAddress) const;
     void secondPass(TokenStream&);
 
     bool isSequenceValid(const Command& previousCommand,

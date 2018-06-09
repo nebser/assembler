@@ -14,39 +14,42 @@ using std::ofstream;
 using std::string;
 using std::vector;
 
+// Address space size is 2^16
+const int Assembler::MEMORY_SIZE = 0x10000;
+
 void Assembler::assembleFile(const string& inputFileName,
-                             const string& outputFileName) {
+                             const string& outputFileName, int startAddress) {
+    if (startAddress > MEMORY_SIZE || startAddress < 0) {
+        throw MemoryException("Invalid start address " +
+                              Utils::convertToString(startAddress));
+    }
+
     ifstream input;
     input.exceptions(ifstream::badbit);
-    try {
-        input.open(inputFileName.c_str());
-        Tokenizer tokenizer;
-        auto tokenStream = TokenStream(tokenizer.parse(input));
-        input.close();
+    input.open(inputFileName.c_str());
+    Tokenizer tokenizer;
+    auto tokenStream = TokenStream(tokenizer.parse(input));
+    input.close();
 
-        Recognizer recognizer;
+    Recognizer recognizer;
 
-        auto symbolTable = firstPass(tokenStream, recognizer);
-        cout << "PASSED" << std::endl;
-        cout << symbolTable;
-        tokenStream.reset();
-        secondPass(tokenStream);
+    auto symbolTable = firstPass(tokenStream, recognizer, startAddress);
+    cout << "PASSED" << std::endl;
+    cout << symbolTable;
+    tokenStream.reset();
+    secondPass(tokenStream);
 
-        ofstream output;
-        output.open(outputFileName.c_str());
+    ofstream output;
+    output.open(outputFileName.c_str());
 
-        output.close();
-    } catch (const ifstream::failure& f) {
-        cout << f.what();
-    } catch (const AssemblerException& ae) {
-        cout << ae.error() << std::endl;
-    }
+    output.close();
 }
 
 SymbolTable Assembler::firstPass(TokenStream& tokenStream,
-                                 const Recognizer& recognizer) const {
+                                 const Recognizer& recognizer,
+                                 int startAddress) const {
     SymbolTable symbolTable;
-    auto locationCounter = 0;
+    auto locationCounter = startAddress;
     auto previousCommand = DUMMY_COMMAND;
     Section* currentSection = nullptr;
     vector<string> globalSymbols;
@@ -55,7 +58,8 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
     while (!tokenStream.end() && !endDetected) {
         auto command = recognizer.recognizeCommand(tokenStream);
         if (!isSequenceValid(previousCommand, command)) {
-            throw InvalidInstructionSequence();
+            throw InvalidInstructionSequence(previousCommand.name,
+                                             command.name);
         }
         switch (command.type) {
             case Command::GLOBAL_DIR: {
@@ -68,21 +72,25 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
                 if (currentSection == nullptr) {
                     throw NoSectionDefined(command.name);
                 }
-                symbolTable.updateSectionSize(currentSection->getName(),
-                                              locationCounter);
+                symbolTable.updateSectionSize(
+                    currentSection->getName(),
+                    locationCounter - symbolTable.getCummulativeSectionSize() -
+                        startAddress);
                 delete currentSection;
                 endDetected = true;
                 break;
             case Command::SECTION:
                 if (currentSection) {
-                    symbolTable.updateSectionSize(currentSection->getName(),
-                                                  locationCounter);
+                    symbolTable.updateSectionSize(
+                        currentSection->getName(),
+                        locationCounter -
+                            symbolTable.getCummulativeSectionSize() -
+                            startAddress);
                     delete currentSection;
                 }
                 currentSection =
                     recognizer.recognizeSection(command, tokenStream);
                 symbolTable.putSection(currentSection->getName());
-                locationCounter = 0;
                 break;
             case Command::LABEL:
                 symbolTable.putSymbol(command.name, locationCounter);
@@ -128,6 +136,7 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
                                   SymbolTable::UNKNOWN_SECTION);
         }
     }
+
     return symbolTable;
 }
 
