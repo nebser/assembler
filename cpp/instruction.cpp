@@ -139,7 +139,7 @@ AlignDirective& AlignDirective::decode(TokenStream& tokenStream) {
 
 AlignDirective& AlignDirective::evaluate(int currentLocationCounter) {
     auto newLocationCounter = currentLocationCounter;
-    while (currentLocationCounter % padd) {
+    while (newLocationCounter % padd) {
         newLocationCounter++;
     }
     auto calculatedPad = newLocationCounter - currentLocationCounter;

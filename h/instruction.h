@@ -38,7 +38,7 @@ class Definition : public WritableDirective {
     int write(std::ostream&, int currentColumn) const override;
 
     int getSize() const override {
-        return datas.size() == 0 ? multiplier : multiplier * datas.size();
+        return (datas.size() == 0 ? multiplier : multiplier * datas.size()) * 8;
     }
 
    private:
@@ -55,27 +55,27 @@ class SkipDirective : public WritableDirective {
 
     int write(std::ostream&, int currentColumn) const override;
 
-    int getSize() const override { return size; }
+    int getSize() const override { return size * 8; }
 
    private:
     int size;
     char fill;
 };
 
-class AlignDirective : public WritableData {
+class AlignDirective : public WritableDirective {
    public:
     AlignDirective() {
         fill = 0;
         maxPadd = int((unsigned int)~0 >> 1);
     }
 
-    AlignDirective& decode(TokenStream&);
+    AlignDirective& decode(TokenStream&) override;
 
     AlignDirective& evaluate(int currentLocationCounter);
 
     int write(std::ostream&, int currentColumn) const override;
 
-    int getSize() const override { return size; }
+    int getSize() const override { return size * 8; }
 
    private:
     int padd;
