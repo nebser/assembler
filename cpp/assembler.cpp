@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "exceptions_a.h"
+#include "instruction.h"
 #include "recognizer.h"
 #include "symbol_table.h"
 #include "tokenizer.h"
@@ -25,7 +26,9 @@ void Assembler::assembleFile(const string& inputFileName,
 
         Recognizer recognizer;
 
-        firstPass(tokenStream, recognizer);
+        auto symbolTable = firstPass(tokenStream, recognizer);
+        cout << "PASSED" << std::endl;
+        cout << symbolTable;
         tokenStream.reset();
         secondPass(tokenStream);
 
@@ -62,6 +65,12 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
                 break;
             }
             case Command::END_DIR:
+                if (currentSection == nullptr) {
+                    throw NoSectionDefined(command.name);
+                }
+                symbolTable.updateSectionSize(currentSection->getName(),
+                                              locationCounter);
+                delete currentSection;
                 endDetected = true;
                 break;
             case Command::SECTION:
@@ -81,25 +90,29 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
             case Command::DEFINITION:
                 locationCounter += recognizer.recognizeDefinition(command)
                                        .decode(tokenStream)
-                                       .getSize();
+                                       .getSize() /
+                                   8;
                 break;
-            case Command::ALIGN_DIR:
-                locationCounter += AlignDirective()
-                                       .decode(tokenStream)
-                                       .evaluate(locationCounter)
-                                       .getSize();
+            case Command::ALIGN_DIR: {
+                AlignDirective al;
+                locationCounter +=
+                    al.decode(tokenStream).evaluate(locationCounter).getSize() /
+                    8;
                 break;
+            }
             case Command::SKIP_DIR:
                 locationCounter +=
-                    SkipDirective().decode(tokenStream).getSize();
+                    SkipDirective().decode(tokenStream).getSize() / 8;
                 break;
             case Command::INSTRUCTION: {
                 auto instruction = recognizer.recognizeInstruction(command);
-                locationCounter += instruction->decode(tokenStream).getSize();
+                locationCounter +=
+                    instruction->decode(tokenStream).getSize() / 8;
                 delete instruction;
+                break;
             }
             default:
-                throw SystemException("Unknown command type");
+                throw SystemException("Unknown command type " + command.name);
         }
         previousCommand = command;
     }
