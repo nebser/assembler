@@ -53,6 +53,17 @@ class SymbolTable {
                                     const SymbolTable& symbolTable);
 
    private:
+    std::string getScopeDescription(Scope scope) const {
+        switch (scope) {
+            case LOCAL:
+                return "L";
+            case GLOBAL:
+                return "G";
+            default:
+                return "UND";
+        }
+    }
+
     std::vector<Symbol> symbols;
     std::vector<Section> sections;
     int lastSection;

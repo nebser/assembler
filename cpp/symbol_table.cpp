@@ -33,7 +33,7 @@ void SymbolTable::putSymbol(const string& name, int address, Scope scope,
             throw SymbolAlreadyDefinedException(symbol.name);
         }
     }
-    symbols.push_back(Symbol(name, address, scope, section, symbols.size()));
+    symbols.push_back(Symbol(name, section, scope, address, symbols.size()));
 }
 
 bool SymbolTable::updateScope(const string& name, Scope newScope) {
@@ -76,15 +76,16 @@ void SymbolTable::updateSectionSize(const string& sectionName,
 
 ostream& operator<<(ostream& os, const SymbolTable& symbolTable) {
     os << "#tabela simbola" << endl;
-    os << "#redni broj\ttip\time\tsek\tvelicina|vrednost\tvidljivost" << endl;
+    os << "#rbr\ttip\time\tsek\tvel|vr\tvid" << endl;
     for (auto&& section : symbolTable.sections) {
         os << section.number << "\tSEK\t" << section.name << '\t'
-           << section.size << "\tL" << endl;
+           << section.number << '\t' << section.size << "\tL" << endl;
     }
     auto numOfSections = symbolTable.sections.size();
     for (auto&& symbol : symbolTable.symbols) {
         os << (symbol.number + numOfSections) << "\tSIM\t" << symbol.name
-           << '\t' << symbol.address << '\t' << symbol.scope << endl;
+           << '\t' << symbol.section << '\t' << symbol.address << '\t'
+           << symbolTable.getScopeDescription(symbol.scope) << endl;
     }
     return os;
 }
