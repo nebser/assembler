@@ -124,7 +124,8 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
     for (auto&& g : globalSymbols) {
         if (!symbolTable.updateScope(g, SymbolTable::GLOBAL)) {
             symbolTable.putSymbol(g, SymbolTable::UNKNOWN_ADDRESS,
-                                  SymbolTable::GLOBAL);
+                                  SymbolTable::GLOBAL,
+                                  SymbolTable::UNKNOWN_SECTION);
         }
     }
     return symbolTable;
