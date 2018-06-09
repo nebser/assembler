@@ -155,6 +155,7 @@ int AlignDirective::write(ostream& os, int currentColumn) const {
     return newColumn;
 }
 
+// NOTE: insert immediate address checking if necessary
 Instruction& SingleAddressInstruction::decode(TokenStream& tokenStream) {
     vector<Token> operandTokens;
     while (!tokenStream.end()) {
