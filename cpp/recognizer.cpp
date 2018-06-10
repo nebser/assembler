@@ -146,15 +146,15 @@ Recognizer::Recognizer() {
         InstructionSpecification("shral", 0x3F));
 
     singleAddressInstructionSpecs.push_back(
-        InstructionSpecification("push", 0x39));
+        InstructionSpecification("push", 0x39, false));
     singleAddressInstructionSpecs.push_back(
-        InstructionSpecification("pusheq", 0x09));
+        InstructionSpecification("pusheq", 0x09, false));
     singleAddressInstructionSpecs.push_back(
-        InstructionSpecification("pushne", 0x19));
+        InstructionSpecification("pushne", 0x19, false));
     singleAddressInstructionSpecs.push_back(
-        InstructionSpecification("pushgt", 0x29));
+        InstructionSpecification("pushgt", 0x29, false));
     singleAddressInstructionSpecs.push_back(
-        InstructionSpecification("pushal", 0x39));
+        InstructionSpecification("pushal", 0x39, false));
     singleAddressInstructionSpecs.push_back(
         InstructionSpecification("pop", 0x3A));
     singleAddressInstructionSpecs.push_back(
@@ -166,15 +166,15 @@ Recognizer::Recognizer() {
     singleAddressInstructionSpecs.push_back(
         InstructionSpecification("popal", 0x3A));
     singleAddressInstructionSpecs.push_back(
-        InstructionSpecification("call", 0x3B));
+        InstructionSpecification("call", 0x3B, false));
     singleAddressInstructionSpecs.push_back(
-        InstructionSpecification("calleq", 0x0B));
+        InstructionSpecification("calleq", 0x0B, false));
     singleAddressInstructionSpecs.push_back(
-        InstructionSpecification("callne", 0x1B));
+        InstructionSpecification("callne", 0x1B, false));
     singleAddressInstructionSpecs.push_back(
-        InstructionSpecification("callgt", 0x2B));
+        InstructionSpecification("callgt", 0x2B, false));
     singleAddressInstructionSpecs.push_back(
-        InstructionSpecification("callal", 0x3B));
+        InstructionSpecification("callal", 0x3B, false));
 
     noAddressInstructionSpecs.push_back(InstructionSpecification("iret", 0x3C));
     noAddressInstructionSpecs.push_back(
@@ -192,11 +192,11 @@ Recognizer::Recognizer() {
     retInstructionSpecs.push_back(InstructionSpecification("retgt", 0x2A));
     retInstructionSpecs.push_back(InstructionSpecification("retal", 0x3A));
 
-    jmpInstructionSpecs.push_back(InstructionSpecification("jmp", 0x30));
+    jmpInstructionSpecs.push_back(InstructionSpecification("jmp", 0x03));
     jmpInstructionSpecs.push_back(InstructionSpecification("jmpeq", 0x00));
-    jmpInstructionSpecs.push_back(InstructionSpecification("jmpne", 0x10));
-    jmpInstructionSpecs.push_back(InstructionSpecification("jmpgt", 0x20));
-    jmpInstructionSpecs.push_back(InstructionSpecification("jmpal", 0x30));
+    jmpInstructionSpecs.push_back(InstructionSpecification("jmpne", 0x01));
+    jmpInstructionSpecs.push_back(InstructionSpecification("jmpgt", 0x02));
+    jmpInstructionSpecs.push_back(InstructionSpecification("jmpal", 0x03));
 }
 
 Command Recognizer::recognizeCommand(TokenStream& tokenStream) const {
@@ -377,7 +377,8 @@ Instruction* Recognizer::recognizeInstruction(const Command& comm) const {
     for (auto&& sais : singleAddressInstructionSpecs) {
         if (sais.name == comm.name ||
             Utils::uppercaseString(sais.name) == comm.name) {
-            return new SingleAddressInstruction(sais.name, sais.opcode);
+            return new SingleAddressInstruction(sais.name, sais.opcode,
+                                                sais.dst);
         }
     }
     for (auto&& dais : doubleAddressInstructionSpecs) {
@@ -390,6 +391,18 @@ Instruction* Recognizer::recognizeInstruction(const Command& comm) const {
         if (nais.name == comm.name ||
             Utils::uppercaseString(nais.name) == comm.name) {
             return new NoAddressInstruction(nais.name, nais.opcode);
+        }
+    }
+    for (auto&& ris : retInstructionSpecs) {
+        if (ris.name == comm.name ||
+            Utils::uppercaseString(ris.name) == comm.name) {
+            return new RetInstruction(ris.name, ris.opcode);
+        }
+    }
+    for (auto&& jis : jmpInstructionSpecs) {
+        if (jis.name == comm.name ||
+            Utils::uppercaseString(jis.name) == comm.name) {
+            return new JmpInstruction(jis.name, jis.opcode);
         }
     }
     throw SystemException("No instruction found with name " + comm.name);

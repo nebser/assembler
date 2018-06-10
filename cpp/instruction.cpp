@@ -162,6 +162,12 @@ Instruction& SingleAddressInstruction::decode(TokenStream& tokenStream) {
         auto t = tokenStream.next();
         if (t.getType() == Token::LINE_DELIMITER) {
             operand = Operand(operandTokens);
+            if (dstExists && (operand.getAddressMode() == IMMEDIATE_CONSTANT ||
+                              operand.getAddressMode() == IMMEDIATE_SYMBOL)) {
+                throw DecodingException(
+                    "dst argument for instruction " + name +
+                    " can't be used with immediate addressing");
+            }
             return *this;
         }
         operandTokens.push_back(t);
@@ -172,11 +178,8 @@ Instruction& SingleAddressInstruction::decode(TokenStream& tokenStream) {
 int SingleAddressInstruction::write(ostream& os, int currentColumn) const {
     auto operandCode = operand.getCode();
     auto operandSize = operand.getSize();
-    unsigned int data =
-        opcode << (operandSize + 5) | (operandCode << operandSize);
-    if (operandSize > 5) {
-        data = (data & 0xFFE00000) | (operandCode & ~0xFF);
-    }
+    unsigned int data = opcode << (operandSize + 5) | operand.getConstantData();
+    data |= operand.getRegData() << (dstExists ? operandSize : operandSize - 5);
     return Utils::writeData(os, data, getSize() / 8, currentColumn);
 }
 
@@ -230,4 +233,27 @@ int DoubleAddressInstruction::write(ostream& os, int currentColumn) const {
         }
     }
     return Utils::writeData(os, data, size, currentColumn);
+}
+
+Instruction& JmpInstruction::decode(TokenStream& tokenStream) {
+    vector<Token> operandTokens;
+    while (!tokenStream.end()) {
+        auto t = tokenStream.next();
+        if (t.getType() == Token::LINE_DELIMITER) {
+            break;
+        }
+        operandTokens.push_back(t);
+    }
+    if (tokenStream.end()) {
+        throw DecodingException("Invalid end of file");
+    }
+    operand = Operand(operandTokens);
+    return *this;
+}
+
+int JmpInstruction::write(ostream& os, int currentColumn) const {
+    auto operandSize = operand.getSize();
+    auto data = prefix << (operandSize + 9) | opcode << (operandSize + 6) |
+                (7 << operandSize) | operand.getCode();
+    return Utils::writeData(os, data, operandSize + 11, currentColumn);
 }

@@ -29,9 +29,11 @@ class Recognizer {
     struct InstructionSpecification {
         std::string name;
         unsigned char opcode;
+        bool dst;
 
-        InstructionSpecification(const std::string& name, unsigned char opcode)
-            : name(name), opcode(opcode) {}
+        InstructionSpecification(const std::string& name, unsigned char opcode,
+                                 bool dst = true)
+            : name(name), opcode(opcode), dst(dst) {}
     };
 
     struct DefinitionSpecification {

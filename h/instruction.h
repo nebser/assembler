@@ -86,8 +86,9 @@ class AlignDirective : public WritableDirective {
 
 class SingleAddressInstruction : public Instruction {
    public:
-    SingleAddressInstruction(const std::string& name, unsigned char opcode)
-        : name(name), opcode(opcode) {}
+    SingleAddressInstruction(const std::string& name, unsigned char opcode,
+                             bool dstExists)
+        : name(name), opcode(opcode), dstExists(dstExists) {}
 
     Instruction& decode(TokenStream&) override;
     // Instruction& evaluate(const SymbolTable&) override;
@@ -99,6 +100,7 @@ class SingleAddressInstruction : public Instruction {
     Operand operand;
     std::string name;
     unsigned char opcode;
+    bool dstExists;
 };
 
 class DoubleAddressInstruction : public Instruction {
@@ -145,6 +147,47 @@ class NoAddressInstruction : public Instruction {
    private:
     std::string name;
     unsigned char opcode;
+};
+
+class RetInstruction : public Instruction {
+   public:
+    RetInstruction(const std::string& name, unsigned char opcode)
+        : name(name), opcode(opcode) {}
+
+    Instruction& decode(TokenStream& tokenStream) override {
+        if (tokenStream.next().getType() != Token::LINE_DELIMITER) {
+            throw DecodingException("Invalid format for ret instruction");
+        }
+        return *this;
+    }
+
+    int write(std::ostream& os, int currentColumn) const override {
+        return Utils::writeData(os, opcode << 11 | 0xF << 5, 2, currentColumn);
+    }
+
+    int getSize() const override { return 16; }
+
+   private:
+    std::string name;
+    unsigned char opcode;
+};
+
+class JmpInstruction : public Instruction {
+   public:
+    JmpInstruction(const std::string& name, unsigned char prefix)
+        : name(name), prefix(prefix), opcode(0) {}
+
+    Instruction& decode(TokenStream&) override;
+
+    int write(std::ostream&, int currentColumn) const override;
+
+    int getSize() const override { return operand.getSize() + 11; }
+
+   private:
+    std::string name;
+    unsigned char prefix;
+    unsigned char opcode;
+    Operand operand;
 };
 
 #endif
