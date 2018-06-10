@@ -15,6 +15,7 @@ class Utils {
 
     static std::string uppercaseString(const std::string&);
 
-    static int writeData(std::ostream&, int data, int size, int currentColumn);
+    static int writeData(std::ostream&, unsigned int data, int size,
+                         int currentColumn);
 };
 #endif

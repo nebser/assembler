@@ -18,7 +18,7 @@ enum AddressMode {
 
 class Operand {
    public:
-    Operand() : constantDataRaw(UNDEFINED_TOKEN) {}
+    Operand() : constantDataRaw(UNDEFINED_TOKEN), constantData(0) {}
 
     Operand(const std::vector<Token>&);
 
@@ -57,6 +57,14 @@ class Operand {
                 return (0x1F << 16) | constantData;
         }
     }
+
+    int getRegData() const {
+        auto size = getSize();
+        auto code = getCode();
+        return size == 5 ? code : code >> 16;
+    }
+
+    int getConstantData() const { return constantData; }
 
    private:
     struct Registry {
