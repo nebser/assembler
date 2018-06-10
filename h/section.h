@@ -11,7 +11,8 @@ class Section {
    public:
     enum Type { RODATA, DATA, TEXT, BSS };
 
-    Section(const std::string& name, Type type) : name(name), type(type) {}
+    Section(const std::string& name, Type type, unsigned int address)
+        : name(name), type(type), address(address) {}
 
     Type getType() const { return type; }
 
@@ -29,6 +30,7 @@ class Section {
    private:
     Type type;
     std::string name;
+    unsigned int address;
 
     std::vector<WritableData*> instructions;
 };

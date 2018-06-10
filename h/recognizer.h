@@ -12,7 +12,8 @@ class Recognizer {
    public:
     Recognizer();
     Command recognizeCommand(TokenStream&) const;
-    Section* recognizeSection(const Command& comm, TokenStream&) const;
+    Section* recognizeSection(const Command& comm, TokenStream&,
+                              unsigned int address) const;
     std::vector<std::string> recognizeGlobalSymbols(TokenStream&) const;
     Definition recognizeDefinition(const Command&) const;
     Instruction* recognizeInstruction(const Command&) const;

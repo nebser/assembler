@@ -7,23 +7,23 @@ using std::ostream;
 using std::string;
 using std::vector;
 
-const int SymbolTable::UNKNOWN_SECTION = -1;
-const int SymbolTable::UNKNOWN_ADDRESS = -1;
+const int SymbolTable::UNKNOWN_SECTION = 0;
+const int SymbolTable::UNKNOWN_ADDRESS = 0;
 
-void SymbolTable::putSection(const string& name) {
+void SymbolTable::putSection(const string& name, unsigned int address) {
     for (auto&& section : sections) {
         if (section.name == name) {
             throw SymbolAlreadyDefinedException(section.name);
         }
     }
-    sections.push_back(Section(name, 0, sections.size()));
+    sections.push_back(Section(name, address, sections.size() + 1, 0));
     lastSection++;
 }
 
 void SymbolTable::putSymbol(const string& name, int address, Scope scope,
                             int section) {
     if (section == -2) {
-        if (lastSection == -1) {
+        if (lastSection == 0) {
             throw NoSectionDefined(name);
         }
         section = lastSection;
@@ -64,6 +64,24 @@ bool SymbolTable::sectionExists(const string& name) const {
     return false;
 }
 
+const SymbolTable::Symbol& SymbolTable::getSymbol(const string& name) const {
+    for (auto&& symbol : symbols) {
+        if (symbol.name == name) {
+            return symbol;
+        }
+    }
+    throw SymbolNotDefined(name);
+}
+
+const SymbolTable::Section& SymbolTable::getSection(const string& name) const {
+    for (auto&& section : sections) {
+        if (section.name == name) {
+            return section;
+        }
+    }
+    throw SymbolNotDefined(name);
+}
+
 void SymbolTable::updateSectionSize(const string& sectionName,
                                     int sectionSize) {
     for (auto&& section : sections) {
@@ -82,17 +100,26 @@ int SymbolTable::getCummulativeSectionSize() const {
     return sum;
 }
 
+void SymbolTable::setSymbolNumbers() {
+    auto currentNumber = sections.size() + 1;
+    for (auto&& symbol : symbols) {
+        symbol.number = currentNumber;
+        currentNumber++;
+    }
+}
+
 ostream& operator<<(ostream& os, const SymbolTable& symbolTable) {
     os << "#tabela simbola" << endl;
-    os << "#rbr\ttip\time\tsek\tvel|vr\tvid" << endl;
+    os << "#rbr\ttip\time\tsek\tvr\tvid\tvel" << endl;
     for (auto&& section : symbolTable.sections) {
         os << section.number << "\tSEK\t" << section.name << '\t'
-           << section.number << '\t' << section.size << "\tL" << endl;
+           << section.number << '\t' << section.address << "\tL\t"
+           << section.size << endl;
     }
     auto numOfSections = symbolTable.sections.size();
     for (auto&& symbol : symbolTable.symbols) {
-        os << (symbol.number + numOfSections) << "\tSIM\t" << symbol.name
-           << '\t' << symbol.section << '\t' << symbol.address << '\t'
+        os << symbol.number << "\tSIM\t" << symbol.name << '\t'
+           << symbol.section << '\t' << symbol.address << '\t'
            << symbolTable.getScopeDescription(symbol.scope) << endl;
     }
     return os;

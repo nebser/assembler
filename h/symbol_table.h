@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "exceptions_a.h"
+#include "utils.h"
 
 class SymbolTable {
    public:
@@ -32,14 +34,16 @@ class SymbolTable {
         std::string name;
         int size;
         int number;
+        unsigned int address;
 
-        Section(const std::string& name, int size, unsigned int number)
-            : name(name), size(size), number(number) {}
+        Section(const std::string& name, unsigned int address,
+                unsigned int number, int size)
+            : name(name), address(address), size(size), number(number) {}
     };
 
-    SymbolTable() { lastSection = -1; }
+    SymbolTable() { lastSection = 0; }
 
-    void putSection(const std::string& name);
+    void putSection(const std::string& name, unsigned int address);
     void putSymbol(const std::string& name, int address, Scope scope = LOCAL,
                    int section = -2);
 
@@ -47,8 +51,21 @@ class SymbolTable {
     bool symbolExists(const std::string& name) const;
     bool sectionExists(const std::string& name) const;
 
+    const Symbol& getSymbol(const std::string&) const;
+    const Section& getSection(const std::string&) const;
+
+    const Section& getSection(unsigned int num) const {
+        if (num > sections.size()) {
+            throw SystemException("No section with number " +
+                                  Utils::convertToString(num));
+        }
+        return sections[num];
+    }
+
     void updateSectionSize(const std::string& sectionName, int sectionSize);
     int getCummulativeSectionSize() const;
+
+    void setSymbolNumbers();
 
     friend std::ostream& operator<<(std::ostream& os,
                                     const SymbolTable& symbolTable);

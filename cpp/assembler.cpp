@@ -95,9 +95,10 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
                             startAddress);
                     delete currentSection;
                 }
-                currentSection =
-                    recognizer.recognizeSection(command, tokenStream);
-                symbolTable.putSection(currentSection->getName());
+                currentSection = recognizer.recognizeSection(
+                    command, tokenStream, locationCounter);
+                symbolTable.putSection(currentSection->getName(),
+                                       locationCounter);
                 break;
             case Command::LABEL:
                 symbolTable.putSymbol(command.name, locationCounter);
@@ -145,6 +146,7 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
         }
     }
 
+    symbolTable.setSymbolNumbers();
     return symbolTable;
 }
 
@@ -195,8 +197,8 @@ vector<Section*> Assembler::secondPass(TokenStream& tokenStream,
                 endDetected = true;
                 break;
             case Command::SECTION:
-                currentSection =
-                    recognizer.recognizeSection(command, tokenStream);
+                currentSection = recognizer.recognizeSection(
+                    command, tokenStream, locationCounter);
                 sections.push_back(currentSection);
                 break;
             case Command::LABEL:

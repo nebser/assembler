@@ -315,7 +315,8 @@ bool Recognizer::isInstruction(const Token& token) const {
 }
 
 Section* Recognizer::recognizeSection(const Command& comm,
-                                      TokenStream& tokenStream) const {
+                                      TokenStream& tokenStream,
+                                      unsigned int address) const {
     auto t = tokenStream.next();
     if (t.getType() != Token::LINE_DELIMITER) {
         throw DecodingException("Invalid character " + t.getValue() +
@@ -324,7 +325,7 @@ Section* Recognizer::recognizeSection(const Command& comm,
     for (auto&& ss : sectionSpecifications) {
         if (ss.name == comm.name ||
             Utils::uppercaseString(ss.name) == comm.name) {
-            return new Section(comm.name, ss.type);
+            return new Section(comm.name, ss.type, address);
         }
     }
     throw DecodingException("Unknown section name " + comm.name);
