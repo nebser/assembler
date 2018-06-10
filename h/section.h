@@ -3,7 +3,8 @@
 
 #include <string>
 #include <vector>
-#include "command.h"
+#include "data.h"
+#include "exceptions_a.h"
 #include "instruction.h"
 
 class Section {
@@ -16,31 +17,12 @@ class Section {
 
     std::string getName() const { return name; }
 
-    bool isValidCommand(const Command& comm) const {
-        switch (type) {
-            case RODATA:
-            case DATA:
-            case BSS:
-                if (comm.type != Command::SKIP_DIR &&
-                    comm.type != Command::ALIGN_DIR &&
-                    comm.type != Command::DEFINITION &&
-                    comm.type != Command::LABEL) {
-                    return false;
-                }
-                break;
-            case TEXT:
-                if (comm.type != Command::INSTRUCTION &&
-                    comm.type != Command::LABEL &&
-                    comm.type != Command::ALIGN_DIR &&
-                    comm.type != Command::SKIP_DIR) {
-                    return false;
-                }
-                break;
-        }
-        return true;
-    }
-
     void addIstruction(WritableData* instruction) {
+        if (type == BSS &&
+            dynamic_cast<WritableDirective*>(instruction)->initialized()) {
+            throw DecodingException(
+                "BSS section can only contain uninitalized data");
+        }
         instructions.push_back(instruction);
     }
 

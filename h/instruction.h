@@ -25,6 +25,7 @@ class Instruction : public WritableData {
 class WritableDirective : public WritableData {
    public:
     virtual WritableDirective& decode(TokenStream&) = 0;
+    virtual bool initialized() const = 0;
     virtual ~WritableDirective() {}
 };
 
@@ -34,6 +35,8 @@ class Definition : public WritableDirective {
         : name(name), multiplier(multiplier) {}
 
     WritableDirective& decode(TokenStream&) override;
+
+    bool initialized() const override { return datas.size() != 0; }
 
     int write(std::ostream&, int currentColumn) const override;
 
@@ -53,6 +56,8 @@ class SkipDirective : public WritableDirective {
 
     WritableDirective& decode(TokenStream&) override;
 
+    bool initialized() const override { return fill != 0; }
+
     int write(std::ostream&, int currentColumn) const override;
 
     int getSize() const override { return size * 8; }
@@ -70,6 +75,8 @@ class AlignDirective : public WritableDirective {
     }
 
     AlignDirective& decode(TokenStream&) override;
+
+    bool initialized() const override { return fill != 0; }
 
     AlignDirective& evaluate(int currentLocationCounter);
 

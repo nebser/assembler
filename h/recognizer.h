@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include "command.h"
+#include "data.h"
 #include "instruction.h"
 #include "section.h"
 #include "tokenizer.h"

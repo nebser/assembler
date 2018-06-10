@@ -1,5 +1,5 @@
-#ifndef COMMAND_H_
-#define COMMAND_H_
+#ifndef DATA_H_
+#define DATA_H_
 
 #include <string>
 
@@ -23,5 +23,7 @@ struct Command {
 };
 
 const auto DUMMY_COMMAND = Command("empty", Command::EMPTY);
+
+struct RelocationData {};
 
 #endif

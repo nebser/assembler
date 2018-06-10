@@ -3,9 +3,11 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "data.h"
 #include "exceptions_a.h"
 #include "instruction.h"
 #include "recognizer.h"
+#include "section.h"
 #include "symbol_table.h"
 #include "tokenizer.h"
 using std::cout;
@@ -18,7 +20,8 @@ using std::vector;
 const int Assembler::MEMORY_SIZE = 0x10000;
 
 void Assembler::assembleFile(const string& inputFileName,
-                             const string& outputFileName, int startAddress) {
+                             const string& outputFileName,
+                             int startAddress) const {
     if (startAddress > MEMORY_SIZE || startAddress < 0) {
         throw MemoryException("Invalid start address " +
                               Utils::convertToString(startAddress));
@@ -37,7 +40,7 @@ void Assembler::assembleFile(const string& inputFileName,
     cout << "PASSED" << std::endl;
     cout << symbolTable;
     tokenStream.reset();
-    secondPass(tokenStream);
+    secondPass(tokenStream, startAddress, symbolTable);
 
     ofstream output;
     output.open(outputFileName.c_str());
@@ -59,6 +62,11 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
         if (!isSequenceValid(previousCommand, command)) {
             throw InvalidInstructionSequence(previousCommand.name,
                                              command.name);
+        }
+        if (currentSection && !isValidForSection(command, *currentSection)) {
+            throw DecodingException("Invalid command " + command.name +
+                                    " for section " +
+                                    currentSection->getName());
         }
         switch (command.type) {
             case Command::GLOBAL_DIR: {
@@ -100,13 +108,14 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
                                        .getSize() /
                                    8;
                 break;
-            case Command::ALIGN_DIR: {
-                AlignDirective al;
-                locationCounter +=
-                    al.decode(tokenStream).evaluate(locationCounter).getSize() /
-                    8;
+            case Command::ALIGN_DIR:
+                locationCounter += AlignDirective()
+                                       .decode(tokenStream)
+                                       .evaluate(locationCounter)
+                                       .getSize() /
+                                   8;
                 break;
-            }
+
             case Command::SKIP_DIR:
                 locationCounter +=
                     SkipDirective().decode(tokenStream).getSize() / 8;
@@ -141,21 +150,84 @@ SymbolTable Assembler::firstPass(TokenStream& tokenStream,
 
 bool Assembler::isSequenceValid(const Command& previousCommand,
                                 const Command& currentCommand) const {
+    // Global directive can only be found at the beginning of a file
     if (currentCommand.type == Command::GLOBAL_DIR &&
         previousCommand.type != Command::GLOBAL_DIR &&
         previousCommand.type != Command::EMPTY) {
         return false;
     }
+
+    // Only one label can be defined in a single row
     if (currentCommand.type == Command::LABEL &&
         previousCommand.type == Command::LABEL) {
         return false;
     }
-    if (currentCommand.type == Command::INSTRUCTION &&
+
+    // A section must be defined before any Instruction or directive
+    if ((currentCommand.type == Command::INSTRUCTION ||
+         currentCommand.type == Command::DEFINITION ||
+         currentCommand.type == Command::SKIP_DIR ||
+         currentCommand.type == Command::ALIGN_DIR) &&
         (previousCommand.type == Command::GLOBAL_DIR ||
          previousCommand.type == Command::EMPTY)) {
         return false;
     }
+
     return true;
 }
 
-void Assembler::secondPass(TokenStream& tokenStream) {}
+vector<Section*> Assembler::secondPass(TokenStream& tokenStream,
+                                       int startAddress,
+                                       const SymbolTable& symbolTable) const {
+    Section* currentSection = nullptr;
+    auto locationCounter = startAddress;
+    auto previousCommand = DUMMY_COMMAND;
+    auto endDetected = false;
+    vector<Section*> sections;
+
+    while (!tokenStream.end() && !endDetected) {
+        auto command = recognizer.recognizeCommand(tokenStream);
+        switch (command.type) {
+            case Command::GLOBAL_DIR:
+                recognizer.recognizeGlobalSymbols(tokenStream);
+                break;
+            case Command::END_DIR:
+                endDetected = true;
+                break;
+            case Command::SECTION:
+                currentSection =
+                    recognizer.recognizeSection(command, tokenStream);
+                sections.push_back(currentSection);
+                break;
+            case Command::LABEL:
+                break;
+            case Command::DEFINITION: {
+                auto definition =
+                    new Definition(recognizer.recognizeDefinition(command));
+                locationCounter +=
+                    definition->decode(tokenStream).getSize() / 8;
+                currentSection->addIstruction(definition);
+                break;
+            }
+            case Command::ALIGN_DIR: {
+                auto alignDir = new AlignDirective();
+                locationCounter += alignDir->decode(tokenStream)
+                                       .evaluate(locationCounter)
+                                       .getSize() /
+                                   8;
+                currentSection->addIstruction(alignDir);
+                break;
+            }
+            case Command::SKIP_DIR: {
+                auto skipDir = new SkipDirective();
+                locationCounter += skipDir->decode(tokenStream).getSize() / 8;
+                currentSection->addIstruction(skipDir);
+                break;
+            }
+            default:
+                throw SystemException("Unknown command " + command.name);
+        }
+    }
+
+    return sections;
+}
