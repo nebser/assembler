@@ -33,7 +33,7 @@ void Assembler::assembleFile(const string& inputFileName,
 
     Recognizer recognizer;
 
-    auto symbolTable = firstPass(tokenStream, recognizer, startAddress);
+    auto symbolTable = firstPass(tokenStream, startAddress);
     cout << "PASSED" << std::endl;
     cout << symbolTable;
     tokenStream.reset();
@@ -46,7 +46,6 @@ void Assembler::assembleFile(const string& inputFileName,
 }
 
 SymbolTable Assembler::firstPass(TokenStream& tokenStream,
-                                 const Recognizer& recognizer,
                                  int startAddress) const {
     SymbolTable symbolTable;
     auto locationCounter = startAddress;

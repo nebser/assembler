@@ -21,12 +21,13 @@ class Assembler {
                       const std::string& outputFileName, int startAddress);
 
    private:
-    SymbolTable firstPass(TokenStream&, const Recognizer& recognizer,
-                          int startAddress) const;
+    SymbolTable firstPass(TokenStream&, int startAddress) const;
     void secondPass(TokenStream&);
 
     bool isSequenceValid(const Command& previousCommand,
                          const Command& currenctCommand) const;
+
+    Recognizer recognizer;
 };
 
 #endif
