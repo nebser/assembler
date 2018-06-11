@@ -1,6 +1,7 @@
 #ifndef DATA_H_
 #define DATA_H_
 
+#include <iostream>
 #include <string>
 
 struct Command {
@@ -24,6 +25,44 @@ struct Command {
 
 const auto DUMMY_COMMAND = Command("empty", Command::EMPTY);
 
-struct RelocationData {};
+class RelocationData {
+   public:
+    enum Type { APSOLUTE, RELATIVE };
+
+    RelocationData(unsigned int offset, Type type, unsigned int value,
+                   unsigned int nextInstructionAddress = 0)
+        : offset(offset),
+          type(type),
+          value(value),
+          nextInstructionAddress(nextInstructionAddress) {}
+
+    unsigned int getOffset() const { return offset; }
+
+    Type getType() const { return type; }
+
+    std::string getTypeDescription() const {
+        return type == APSOLUTE ? "R_386_32" : "R_386_PC32";
+    }
+
+    unsigned int getValue() const { return value; }
+
+    friend std::ostream& operator<<(std::ostream& os,
+                                    const RelocationData& relData) {
+        std::cout << std::hex << relData.offset << ' '
+                  << relData.getTypeDescription() << ' ' << std::dec
+                  << relData.value;
+        if (relData.type == RelocationData::RELATIVE) {
+            std::cout << ' ' << std::hex << relData.nextInstructionAddress;
+        }
+        std::cout << std::endl;
+        return os;
+    }
+
+   private:
+    unsigned int offset;
+    Type type;
+    unsigned int value;
+    unsigned int nextInstructionAddress;
+};
 
 #endif

@@ -1,6 +1,7 @@
 #include "operand.h"
 #include <string>
 #include <vector>
+#include "data.h"
 #include "token.h"
 #include "utils.h"
 using std::string;
@@ -113,6 +114,48 @@ void Operand::determineOperand(const vector<Token>& tokens) {
         }
         default:
             throw DecodingException("Invalid operand " + joinTokens(tokens));
+    }
+}
+
+RelocationData* Operand::evaluate(const SymbolTable& symbolTable,
+                                  int instructionLocation,
+                                  const std::string& mySection) {
+    switch (addressMode) {
+        case IMMEDIATE_CONSTANT:
+        case MEMORY_CONSTANT:
+        case PSW:
+        case REG_DIRECT:
+            return nullptr;
+        case REG_INDIRECT_W_DISPL: {
+            if (constantDataRaw.getType() != Token::IDENTIFICATOR) {
+                constantData = constantDataRaw.getIntValue();
+                return nullptr;
+            }
+        }
+        case IMMEDIATE_SYMBOL:
+        case MEMORY_SYMBOL: {
+            auto symbol = symbolTable.getSymbol(constantDataRaw.getValue());
+            constantData = symbol.address;
+            return new RelocationData(
+                instructionLocation + 2, RelocationData::APSOLUTE,
+                symbol.scope == SymbolTable::LOCAL
+                    ? symbolTable.getSection(symbol.section).address
+                    : symbol.address);
+        }
+        case PC_RELATIVE: {
+            auto symbol = symbolTable.getSymbol(constantDataRaw.getValue());
+            auto section = symbolTable.getSection(mySection);
+            constantData = symbol.address - (instructionLocation + 4);
+            if (section.number == symbol.section) {
+                return nullptr;
+            }
+            return new RelocationData(
+                instructionLocation + 2, RelocationData::RELATIVE,
+                symbol.scope == symbol.scope == SymbolTable::LOCAL
+                    ? symbolTable.getSection(symbol.section).address
+                    : symbol.address,
+                instructionLocation + 4);
+        }
     }
 }
 

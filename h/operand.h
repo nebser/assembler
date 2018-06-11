@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include "data.h"
+#include "symbol_table.h"
 #include "token.h"
 
 enum AddressMode {
@@ -65,6 +67,9 @@ class Operand {
     }
 
     int getConstantData() const { return constantData; }
+
+    RelocationData* evaluate(const SymbolTable&, int instructionLocation,
+                             const std::string& mySection);
 
    private:
     struct Registry {
