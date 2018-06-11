@@ -19,14 +19,21 @@ int Utils::writeData(ostream& os, unsigned int data, int size,
                      int currentColumn) {
     for (unsigned char i = 0; i < size; i++) {
         unsigned char d = (data >> i) & 0xFF;
-        if (d < 0x0F) {
-            os << 0;
-        }
-        os << std::hex << d;
-        currentColumn += 2;
-        if (currentColumn % 16) {
-            os << std::endl;
-        }
+        currentColumn = writeByte(os, d, currentColumn);
+    }
+    return currentColumn;
+}
+
+int Utils::writeInstruction(ostream& os, unsigned int data, int size,
+                            int currentColumn) {
+    auto opcodeSize = 2;
+    for (unsigned char i = 0; i < opcodeSize; i++) {
+        unsigned char d = data >> (8 * (3 - i));
+        currentColumn = writeByte(os, d, currentColumn);
+    }
+    for (unsigned char i = opcodeSize; i < size; i++) {
+        unsigned char d = data >> (8 * i);
+        currentColumn = writeByte(os, d, currentColumn);
     }
     return currentColumn;
 }

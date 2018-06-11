@@ -17,5 +17,20 @@ class Utils {
 
     static int writeData(std::ostream&, unsigned int data, int size,
                          int currentColumn);
+
+    static int writeInstruction(std::ostream&, unsigned int data, int size,
+                                int currentColumn);
+
+    static int writeByte(std::ostream& os, unsigned char d, int currentColumn) {
+        if (d < 0x0F) {
+            os << 0;
+        }
+        os << std::hex << d;
+        currentColumn += 2;
+        if (currentColumn % 16) {
+            os << std::endl;
+        }
+        return currentColumn;
+    }
 };
 #endif

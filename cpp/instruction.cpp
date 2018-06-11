@@ -176,11 +176,11 @@ Instruction& SingleAddressInstruction::decode(TokenStream& tokenStream) {
 }
 
 int SingleAddressInstruction::write(ostream& os, int currentColumn) const {
-    auto operandCode = operand.getCode();
-    auto operandSize = operand.getSize();
-    unsigned int data = opcode << (operandSize + 5) | operand.getConstantData();
-    data |= operand.getRegData() << (dstExists ? operandSize : operandSize - 5);
-    return Utils::writeData(os, data, getSize() / 8, currentColumn);
+    unsigned int data =
+        opcode << 26 |
+        (dstExists ? operand.getRegData() << 21 : operand.getRegData() << 16) |
+        (0xFF & operand.getConstantData());
+    return Utils::writeInstruction(os, data, getSize() / 8, currentColumn);
 }
 
 Instruction& DoubleAddressInstruction::decode(TokenStream& tokenStream) {
@@ -213,26 +213,14 @@ Instruction& DoubleAddressInstruction::decode(TokenStream& tokenStream) {
 }
 
 int DoubleAddressInstruction::write(ostream& os, int currentColumn) const {
-    auto dstCode = dst.getCode();
     auto dstSize = dst.getSize();
-    auto srcCode = src.getCode();
     auto srcSize = src.getSize();
-    unsigned int data = opcode << (dstCode + 5) |
-                        (dstCode << (dstSize > srcSize ? dstSize : srcSize));
-    auto size = 4;
-    if (dstSize > 5) {
-        data = opcode << (dstSize + srcSize) | ((dstCode & ~0xFF) << 21) |
-               srcCode << 16 | (dstCode & 0xFF);
-    } else {
-        if (srcSize > 5) {
-            data = opcode << (dstSize + srcSize) | dstCode << 21 |
-                   ((srcCode & ~0xFF) << 16) | (srcCode & 0xFF);
-        } else {
-            data = opcode << (dstSize + srcSize) | dstCode << dstSize | srcCode;
-            size = 2;
-        }
-    }
-    return Utils::writeData(os, data, size, currentColumn);
+    unsigned int data =
+        opcode << 26 | dst.getRegData() << 21 | src.getRegData() << 16 |
+        (0xFF &
+         (srcSize > dstSize ? src.getConstantData() : dst.getConstantData()));
+    return Utils::writeInstruction(os, data, (dstSize + srcSize + 11) / 4,
+                                   currentColumn);
 }
 
 Instruction& JmpInstruction::decode(TokenStream& tokenStream) {
@@ -248,12 +236,15 @@ Instruction& JmpInstruction::decode(TokenStream& tokenStream) {
         throw DecodingException("Invalid end of file");
     }
     operand = Operand(operandTokens);
+    opcode = operand.getAddressMode() != PC_RELATIVE ? 0x13 : 0x00;
     return *this;
 }
 
 int JmpInstruction::write(ostream& os, int currentColumn) const {
     auto operandSize = operand.getSize();
-    auto data = prefix << (operandSize + 9) | opcode << (operandSize + 6) |
-                (7 << operandSize) | operand.getCode();
-    return Utils::writeData(os, data, operandSize + 11, currentColumn);
+    unsigned int data = prefix << 30 | opcode << 26 | 15 << 21 |
+                        operand.getRegData() << 16 |
+                        (0xFF & operand.getConstantData());
+    return Utils::writeInstruction(os, data, (operandSize + 11) / 8,
+                                   currentColumn);
 }

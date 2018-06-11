@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include "data.h"
 #include "operand.h"
 #include "symbol_table.h"
 #include "tokenizer.h"
@@ -18,7 +19,9 @@ class WritableData {
 class Instruction : public WritableData {
    public:
     virtual Instruction& decode(TokenStream&) = 0;
-    // virtual Instruction& evaluate(const SymbolTable&) = 0;
+    virtual RelocationData* evaluate(const SymbolTable&,
+                                     int instructionLocation,
+                                     const std::string& mySection) = 0;
     virtual ~Instruction() {}
 };
 
@@ -98,7 +101,11 @@ class SingleAddressInstruction : public Instruction {
         : name(name), opcode(opcode), dstExists(dstExists) {}
 
     Instruction& decode(TokenStream&) override;
-    // Instruction& evaluate(const SymbolTable&) override;
+    RelocationData* evaluate(const SymbolTable& symbolTable,
+                             int instructionLocation,
+                             const std::string& mySection) override {
+        return operand.evaluate(symbolTable, instructionLocation, mySection);
+    }
     int getSize() const override { return 11 + operand.getSize(); }
 
     int write(std::ostream&, int currentColumn) const override;
@@ -116,7 +123,13 @@ class DoubleAddressInstruction : public Instruction {
         : name(name), opcode(opcode) {}
 
     Instruction& decode(TokenStream&) override;
-    // Instruction& evaluate(const SymbolTable&) override;
+    RelocationData* evaluate(const SymbolTable& symbolTable,
+                             int instructionLocation,
+                             const std::string& mySection) override {
+        return dst.getSize() > src.getSize()
+                   ? dst.evaluate(symbolTable, instructionLocation, mySection)
+                   : src.evaluate(symbolTable, instructionLocation, mySection);
+    }
     int getSize() const override { return 11 + dst.getSize() + src.getSize(); }
 
     int write(std::ostream&, int currentColumn) const override;
@@ -145,10 +158,15 @@ class NoAddressInstruction : public Instruction {
         return *this;
     }
 
+    RelocationData* evaluate(const SymbolTable&, int instructionLocation,
+                             const std::string& mySection) override {
+        return nullptr;
+    }
+
     int getSize() const override { return 16; }
 
     int write(std::ostream& os, int currentColumn) const override {
-        return Utils::writeData(os, opcode << 11, 2, currentColumn);
+        return Utils::writeInstruction(os, opcode << 26, 2, currentColumn);
     }
 
    private:
@@ -168,6 +186,11 @@ class RetInstruction : public Instruction {
         return *this;
     }
 
+    RelocationData* evaluate(const SymbolTable&, int instructionLocation,
+                             const std::string& mySection) override {
+        return nullptr;
+    }
+
     int write(std::ostream& os, int currentColumn) const override {
         return Utils::writeData(os, opcode << 11 | 0xF << 5, 2, currentColumn);
     }
@@ -185,6 +208,12 @@ class JmpInstruction : public Instruction {
         : name(name), prefix(prefix), opcode(0) {}
 
     Instruction& decode(TokenStream&) override;
+
+    RelocationData* evaluate(const SymbolTable& symbolTable,
+                             int instructionLocation,
+                             const std::string& mySection) override {
+        return operand.evaluate(symbolTable, instructionLocation, mySection);
+    }
 
     int write(std::ostream&, int currentColumn) const override;
 
