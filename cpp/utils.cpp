@@ -31,7 +31,7 @@ int Utils::writeInstruction(ostream& os, unsigned int data, int size,
         unsigned char d = data >> (8 * (3 - i));
         currentColumn = writeByte(os, d, currentColumn);
     }
-    for (unsigned char i = opcodeSize; i < size; i++) {
+    for (unsigned char i = 0; i < size - opcodeSize; i++) {
         unsigned char d = data >> (8 * i);
         currentColumn = writeByte(os, d, currentColumn);
     }

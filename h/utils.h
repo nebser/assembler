@@ -25,11 +25,8 @@ class Utils {
         if (d < 0x0F) {
             os << 0;
         }
-        os << std::hex << d;
         currentColumn += 2;
-        if (currentColumn % 16) {
-            os << std::endl;
-        }
+        os << std::hex << int(d) << (currentColumn % 16 ? " " : "\n");
         return currentColumn;
     }
 };

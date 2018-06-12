@@ -139,8 +139,8 @@ RelocationData* Operand::evaluate(const SymbolTable& symbolTable,
             return new RelocationData(
                 instructionLocation + 2, RelocationData::APSOLUTE,
                 symbol.scope == SymbolTable::LOCAL
-                    ? symbolTable.getSection(symbol.section).address
-                    : symbol.address);
+                    ? symbolTable.getSection(symbol.section).number
+                    : symbol.number);
         }
         case PC_RELATIVE: {
             auto symbol = symbolTable.getSymbol(constantDataRaw.getValue());

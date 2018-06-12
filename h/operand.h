@@ -56,7 +56,7 @@ class Operand {
             case REG_INDIRECT_W_DISPL:
                 return (0x03 << 19) | (registryData << 16) | constantData;
             case PC_RELATIVE:
-                return (0x1F << 16) | constantData;
+                return (0x1F << 16) | (0xFFFF & constantData);
         }
     }
 
@@ -66,7 +66,7 @@ class Operand {
         return size == 5 ? code : code >> 16;
     }
 
-    int getConstantData() const { return constantData; }
+    int getConstantData() const { return constantData & 0xFFFF; }
 
     RelocationData* evaluate(const SymbolTable&, int instructionLocation,
                              const std::string& mySection);

@@ -130,7 +130,7 @@ class DoubleAddressInstruction : public Instruction {
                    ? dst.evaluate(symbolTable, instructionLocation, mySection)
                    : src.evaluate(symbolTable, instructionLocation, mySection);
     }
-    int getSize() const override { return 11 + dst.getSize() + src.getSize(); }
+    int getSize() const override { return 6 + dst.getSize() + src.getSize(); }
 
     int write(std::ostream&, int currentColumn) const override;
 
@@ -192,7 +192,8 @@ class RetInstruction : public Instruction {
     }
 
     int write(std::ostream& os, int currentColumn) const override {
-        return Utils::writeData(os, opcode << 11 | 0xF << 5, 2, currentColumn);
+        return Utils::writeInstruction(os, opcode << 26 | 0xF << 21, 2,
+                                       currentColumn);
     }
 
     int getSize() const override { return 16; }
