@@ -20,9 +20,10 @@ enum AddressMode {
 
 class Operand {
    public:
-    Operand() : constantDataRaw(UNDEFINED_TOKEN), constantData(0) {}
+    // Operand() : constantDataRaw(UNDEFINED_TOKEN), constantData(0) {}
 
-    Operand(const std::vector<Token>&);
+    Operand(const std::vector<Token>&,
+            const std::vector<AddressMode>& invalidAddressModes = {});
 
     AddressMode getAddressMode() const { return addressMode; }
 
@@ -85,8 +86,6 @@ class Operand {
     static int getRegistry(const std::string&);
 
     void determineOperand(const std::vector<Token>&);
-
-    std::string joinTokens(const std::vector<Token>&) const;
 
     AddressMode addressMode;
     int registryData;

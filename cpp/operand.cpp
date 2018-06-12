@@ -34,9 +34,16 @@ int Operand::getRegistry(const string& name) {
     return -1;
 }
 
-Operand::Operand(const vector<Token>& tokens)
+Operand::Operand(const vector<Token>& tokens,
+                 const vector<AddressMode>& invalidAddressModes)
     : constantDataRaw(UNDEFINED_TOKEN) {
     determineOperand(tokens);
+    for (auto&& iam : invalidAddressModes) {
+        if (addressMode == iam) {
+            throw DecodingException("Invalid address mode for operand " +
+                                    Token::joinTokens(tokens));
+        }
+    }
 }
 
 void Operand::determineOperand(const vector<Token>& tokens) {
@@ -46,7 +53,7 @@ void Operand::determineOperand(const vector<Token>& tokens) {
         case Token::DEC_NUMBER:
             if (tokens.size() != 1) {
                 throw DecodingException("Invalid operand " +
-                                        joinTokens(tokens));
+                                        Token::joinTokens(tokens));
             }
             constantData = tokens[0].getIntValue();
             addressMode = IMMEDIATE_CONSTANT;
@@ -55,7 +62,7 @@ void Operand::determineOperand(const vector<Token>& tokens) {
             if (tokens.size() != 2 ||
                 tokens[1].getType() != Token::IDENTIFICATOR) {
                 throw DecodingException("Invalid operand " +
-                                        joinTokens(tokens));
+                                        Token::joinTokens(tokens));
             }
             addressMode = IMMEDIATE_SYMBOL;
             constantDataRaw = tokens[1];
@@ -66,7 +73,7 @@ void Operand::determineOperand(const vector<Token>& tokens) {
                  tokens[1].getType() != Token::HEX_NUMBER &&
                  tokens[1].getType() != Token::DEC_NUMBER)) {
                 throw DecodingException("Invalid operand " +
-                                        joinTokens(tokens));
+                                        Token::joinTokens(tokens));
             }
             addressMode = MEMORY_CONSTANT;
             constantData = tokens[1].getIntValue();
@@ -75,7 +82,7 @@ void Operand::determineOperand(const vector<Token>& tokens) {
             if (tokens.size() != 2 ||
                 tokens[1].getType() != Token::IDENTIFICATOR) {
                 throw DecodingException("Invalid operand " +
-                                        joinTokens(tokens));
+                                        Token::joinTokens(tokens));
             }
             addressMode = PC_RELATIVE;
             constantDataRaw = tokens[1];
@@ -92,7 +99,7 @@ void Operand::determineOperand(const vector<Token>& tokens) {
                     tokens.size() != 4 ||
                     tokens[3].getType() != Token::CLOSED_BRACKETS) {
                     throw DecodingException("Invalid operand " +
-                                            joinTokens(tokens));
+                                            Token::joinTokens(tokens));
                 }
                 addressMode = REG_INDIRECT_W_DISPL;
                 registryData = registries[index].code;
@@ -101,7 +108,7 @@ void Operand::determineOperand(const vector<Token>& tokens) {
             }
             if (tokens.size() != 1) {
                 throw DecodingException("Invalid operand " +
-                                        joinTokens(tokens));
+                                        Token::joinTokens(tokens));
             }
             if (tokens[0].getValue() == "PSW" ||
                 tokens[0].getValue() == "psw") {
@@ -113,7 +120,8 @@ void Operand::determineOperand(const vector<Token>& tokens) {
             return;
         }
         default:
-            throw DecodingException("Invalid operand " + joinTokens(tokens));
+            throw DecodingException("Invalid operand " +
+                                    Token::joinTokens(tokens));
     }
 }
 
@@ -126,21 +134,21 @@ RelocationData* Operand::evaluate(const SymbolTable& symbolTable,
         case PSW:
         case REG_DIRECT:
             return nullptr;
-        case REG_INDIRECT_W_DISPL: {
+        case REG_INDIRECT_W_DISPL:
             if (constantDataRaw.getType() != Token::IDENTIFICATOR) {
                 constantData = constantDataRaw.getIntValue();
                 return nullptr;
             }
-        }
         case IMMEDIATE_SYMBOL:
         case MEMORY_SYMBOL: {
             auto symbol = symbolTable.getSymbol(constantDataRaw.getValue());
+            auto section = symbolTable.getSection(mySection);
             constantData = symbol.address;
-            return new RelocationData(
-                instructionLocation + 2, RelocationData::APSOLUTE,
-                symbol.scope == SymbolTable::LOCAL
-                    ? symbolTable.getSection(symbol.section).number
-                    : symbol.number);
+            return new RelocationData(instructionLocation + 2 - section.address,
+                                      RelocationData::APSOLUTE,
+                                      symbol.scope == SymbolTable::LOCAL
+                                          ? symbol.section
+                                          : symbol.number);
         }
         case PC_RELATIVE: {
             auto symbol = symbolTable.getSymbol(constantDataRaw.getValue());
@@ -149,20 +157,12 @@ RelocationData* Operand::evaluate(const SymbolTable& symbolTable,
             if (section.number == symbol.section) {
                 return nullptr;
             }
-            return new RelocationData(
-                instructionLocation + 2, RelocationData::RELATIVE,
-                symbol.scope == symbol.scope == SymbolTable::LOCAL
-                    ? symbolTable.getSection(symbol.section).address
-                    : symbol.address,
-                instructionLocation + 4);
+            return new RelocationData(instructionLocation + 2 - section.address,
+                                      RelocationData::RELATIVE,
+                                      symbol.scope == SymbolTable::LOCAL
+                                          ? symbol.section
+                                          : symbol.number,
+                                      instructionLocation + 4);
         }
     }
-}
-
-string Operand::joinTokens(const vector<Token>& token) const {
-    string result = "";
-    for (auto&& t : token) {
-        result += t.getValue() + " ";
-    }
-    return result;
 }

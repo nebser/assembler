@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 #include "exceptions_a.h"
 
 class Token {
@@ -78,6 +79,8 @@ class Token {
         return firstToken.type == secondToken.type &&
                firstToken.value == secondToken.value;
     }
+
+    static std::string joinTokens(const std::vector<Token>&);
 
    private:
     Type type;
