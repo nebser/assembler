@@ -60,6 +60,7 @@ class Assembler {
         }
     }
 
+    void write(const std::vector<Section*>&, std::ostream&) const;
     Recognizer recognizer;
 };
 

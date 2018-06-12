@@ -29,3 +29,9 @@ const Section& Section::writeContent(ostream& os) const {
     }
     return *this;
 }
+
+Section::~Section() {
+    for (auto&& ins : instructions) {
+        delete ins;
+    }
+}

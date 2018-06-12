@@ -29,6 +29,7 @@ int main(int argc, char** argv) {
         // Assemly of a file
         Assembler as;
         as.assembleFile(inputFileName, outputFileName, startAddress);
+        cout << "FILE ASSEMBLY SUCCESSFULL" << endl;
 
     } catch (const ifstream::failure& f) {
         cout << std::endl << f.what() << std::endl << std::endl;

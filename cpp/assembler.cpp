@@ -13,6 +13,7 @@
 using std::cout;
 using std::ifstream;
 using std::ofstream;
+using std::ostream;
 using std::string;
 using std::vector;
 
@@ -22,11 +23,13 @@ const int Assembler::MEMORY_SIZE = 0x10000;
 void Assembler::assembleFile(const string& inputFileName,
                              const string& outputFileName,
                              int startAddress) const {
+    // Memory guard
     if (startAddress > MEMORY_SIZE || startAddress < 0) {
         throw MemoryException("Invalid start address " +
                               Utils::convertToString(startAddress));
     }
 
+    // Formatting input
     ifstream input;
     input.exceptions(ifstream::badbit);
     input.open(inputFileName.c_str());
@@ -34,23 +37,30 @@ void Assembler::assembleFile(const string& inputFileName,
     auto tokenStream = TokenStream(tokenizer.parse(input));
     input.close();
 
-    Recognizer recognizer;
-
+    // First pass
     auto symbolTable = firstPass(tokenStream, startAddress);
-    cout << "PASSED" << std::endl;
-    cout << symbolTable;
+
+    // Memory guard
+    if (symbolTable.getCummulativeSectionSize() + startAddress > MEMORY_SIZE) {
+        throw MemoryException("Sections are too big to start at the address " +
+                              Utils::convertToString(startAddress));
+    }
+
+    // Second pass
     tokenStream.reset();
     auto sections = secondPass(tokenStream, startAddress, symbolTable);
-    for (auto&& s : sections) {
-        s->writeRelData(cout);
-    }
-    for (auto&& s : sections) {
-        s->writeContent(cout);
-    }
+
+    // Writing to output
     ofstream output;
     output.open(outputFileName.c_str());
-
+    output << symbolTable;
+    write(sections, output);
     output.close();
+
+    // Dumping memory
+    for (auto&& s : sections) {
+        delete s;
+    }
 }
 
 SymbolTable Assembler::firstPass(TokenStream& tokenStream,
@@ -251,4 +261,13 @@ vector<Section*> Assembler::secondPass(TokenStream& tokenStream,
     }
 
     return sections;
+}
+
+void Assembler::write(const vector<Section*>& sections, ostream& os) const {
+    for (auto&& s : sections) {
+        s->writeRelData(os);
+    }
+    for (auto&& s : sections) {
+        s->writeContent(os);
+    }
 }

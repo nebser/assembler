@@ -48,14 +48,12 @@ class RelocationData {
 
     friend std::ostream& operator<<(std::ostream& os,
                                     const RelocationData& relData) {
-        std::cout << std::hex << "0x" << relData.offset << '\t'
-                  << relData.getTypeDescription() << '\t' << std::dec
-                  << relData.value;
+        os << std::hex << "0x" << relData.offset << '\t'
+           << relData.getTypeDescription() << '\t' << std::dec << relData.value;
         if (relData.type == RelocationData::RELATIVE) {
-            std::cout << '\t' << std::hex << "0x"
-                      << relData.nextInstructionAddress;
+            os << '\t' << std::hex << "0x" << relData.nextInstructionAddress;
         }
-        std::cout << std::endl;
+        os << std::endl;
         return os;
     }
 

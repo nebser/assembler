@@ -15,6 +15,8 @@ class Section {
     Section(const std::string& name, Type type, unsigned int address)
         : name(name), type(type), address(address) {}
 
+    ~Section();
+
     Type getType() const { return type; }
 
     std::string getName() const { return name; }
