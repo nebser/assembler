@@ -7,8 +7,7 @@ const Section& Section::writeRelData(ostream& os) const {
     if (type == BSS) {
         return *this;
     }
-    os << "#.rel" << name << endl
-       << "#ofset\ttip\tvrednost\tadr sl inst" << endl;
+    os << "#.rel" << name << endl << "#ofset\ttip\tvrednost" << endl;
     for (auto&& r : relocations) {
         os << r;
     }

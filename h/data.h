@@ -29,12 +29,8 @@ class RelocationData {
    public:
     enum Type { APSOLUTE, RELATIVE };
 
-    RelocationData(unsigned int offset, Type type, unsigned int value,
-                   unsigned int nextInstructionAddress = 0)
-        : offset(offset),
-          type(type),
-          value(value),
-          nextInstructionAddress(nextInstructionAddress) {}
+    RelocationData(unsigned int offset, Type type, unsigned int value)
+        : offset(offset), type(type), value(value) {}
 
     unsigned int getOffset() const { return offset; }
 
@@ -49,11 +45,8 @@ class RelocationData {
     friend std::ostream& operator<<(std::ostream& os,
                                     const RelocationData& relData) {
         os << std::hex << "0x" << relData.offset << '\t'
-           << relData.getTypeDescription() << '\t' << std::dec << relData.value;
-        if (relData.type == RelocationData::RELATIVE) {
-            os << '\t' << std::hex << "0x" << relData.nextInstructionAddress;
-        }
-        os << std::endl;
+           << relData.getTypeDescription() << '\t' << std::dec << relData.value
+           << std::endl;
         return os;
     }
 
@@ -61,7 +54,6 @@ class RelocationData {
     unsigned int offset;
     Type type;
     unsigned int value;
-    unsigned int nextInstructionAddress;
 };
 
 #endif

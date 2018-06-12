@@ -144,25 +144,22 @@ RelocationData* Operand::evaluate(const SymbolTable& symbolTable,
             auto symbol = symbolTable.getSymbol(constantDataRaw.getValue());
             auto section = symbolTable.getSection(mySection);
             constantData = symbol.address;
-            return new RelocationData(instructionLocation + 2 - section.address,
-                                      RelocationData::APSOLUTE,
-                                      symbol.scope == SymbolTable::LOCAL
-                                          ? symbol.section
-                                          : symbol.number);
+            return new RelocationData(
+                instructionLocation + 2, RelocationData::APSOLUTE,
+                symbol.scope == SymbolTable::LOCAL ? symbol.section
+                                                   : symbol.number);
         }
         case PC_RELATIVE: {
             auto symbol = symbolTable.getSymbol(constantDataRaw.getValue());
             auto section = symbolTable.getSection(mySection);
-            constantData = symbol.address - (instructionLocation + 4);
+            constantData = symbol.address - 2;
             if (section.number == symbol.section) {
                 return nullptr;
             }
-            return new RelocationData(instructionLocation + 2 - section.address,
-                                      RelocationData::RELATIVE,
-                                      symbol.scope == SymbolTable::LOCAL
-                                          ? symbol.section
-                                          : symbol.number,
-                                      instructionLocation + 4);
+            return new RelocationData(
+                instructionLocation + 2, RelocationData::RELATIVE,
+                symbol.scope == SymbolTable::LOCAL ? symbol.section
+                                                   : symbol.number);
         }
     }
 }
