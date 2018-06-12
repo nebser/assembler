@@ -1,5 +1,4 @@
 #include "instruction.h"
-#include <iostream>
 #include <vector>
 #include "token.h"
 #include "tokenizer.h"
@@ -161,13 +160,8 @@ Instruction& SingleAddressInstruction::decode(TokenStream& tokenStream) {
     while (!tokenStream.end()) {
         auto t = tokenStream.next();
         if (t.getType() == Token::LINE_DELIMITER) {
-            operand = Operand(operandTokens);
-            if (dstExists && (operand.getAddressMode() == IMMEDIATE_CONSTANT ||
-                              operand.getAddressMode() == IMMEDIATE_SYMBOL)) {
-                throw DecodingException(
-                    "dst argument for instruction " + name +
-                    " can't be used with immediate addressing");
-            }
+            operand = new Operand(operandTokens,
+                                  {IMMEDIATE_CONSTANT, IMMEDIATE_SYMBOL});
             return *this;
         }
         operandTokens.push_back(t);
@@ -176,10 +170,10 @@ Instruction& SingleAddressInstruction::decode(TokenStream& tokenStream) {
 }
 
 int SingleAddressInstruction::write(ostream& os, int currentColumn) const {
-    unsigned int data =
-        opcode << 26 |
-        (dstExists ? operand.getRegData() << 21 : operand.getRegData() << 16) |
-        operand.getConstantData();
+    unsigned int data = opcode << 26 |
+                        (dstExists ? operand->getRegData() << 21
+                                   : operand->getRegData() << 16) |
+                        operand->getConstantData();
     return Utils::writeInstruction(os, data, getSize() / 8, currentColumn);
 }
 
@@ -189,7 +183,8 @@ Instruction& DoubleAddressInstruction::decode(TokenStream& tokenStream) {
     while (!tokenStream.end()) {
         auto t = tokenStream.next();
         if (t.getType() == Token::COMMA) {
-            dst = Operand(dstTokens);
+            dst =
+                new Operand(dstTokens, {IMMEDIATE_CONSTANT, IMMEDIATE_SYMBOL});
             break;
         }
         dstTokens.push_back(t);
@@ -200,8 +195,8 @@ Instruction& DoubleAddressInstruction::decode(TokenStream& tokenStream) {
     while (!tokenStream.end()) {
         auto t = tokenStream.next();
         if (t.getType() == Token::LINE_DELIMITER) {
-            src = Operand(srcTokens);
-            if (src.getSize() + dst.getSize() > 26) {
+            src = new Operand(srcTokens);
+            if (src->getSize() + dst->getSize() > 26) {
                 throw DecodingException(
                     "Only one operand can have additional data for operands");
             }
@@ -213,11 +208,11 @@ Instruction& DoubleAddressInstruction::decode(TokenStream& tokenStream) {
 }
 
 int DoubleAddressInstruction::write(ostream& os, int currentColumn) const {
-    auto dstSize = dst.getSize();
-    auto srcSize = src.getSize();
+    auto dstSize = dst->getSize();
+    auto srcSize = src->getSize();
     unsigned int data =
-        opcode << 26 | dst.getRegData() << 21 | src.getRegData() << 16 |
-        (srcSize > dstSize ? src.getConstantData() : dst.getConstantData());
+        opcode << 26 | dst->getRegData() << 21 | src->getRegData() << 16 |
+        (srcSize > dstSize ? src->getConstantData() : dst->getConstantData());
     // os << "Name " << name << dstSize << " " << srcSize << std::endl;
     return Utils::writeInstruction(os, data, (dstSize + srcSize + 6) / 8,
                                    currentColumn);
@@ -235,15 +230,17 @@ Instruction& JmpInstruction::decode(TokenStream& tokenStream) {
     if (tokenStream.end()) {
         throw DecodingException("Invalid end of file");
     }
-    operand = Operand(operandTokens);
-    opcode = operand.getAddressMode() == PC_RELATIVE ? 0x00 : 0x0D;
+    operand =
+        new Operand(operandTokens, {IMMEDIATE_CONSTANT, IMMEDIATE_SYMBOL});
+    opcode = operand->getAddressMode() == PC_RELATIVE ? 0x00 : 0x0D;
     return *this;
 }
 
 int JmpInstruction::write(ostream& os, int currentColumn) const {
-    auto operandSize = operand.getSize();
+    auto operandSize = operand->getSize();
     unsigned int data = prefix << 30 | opcode << 26 | 15 << 21 |
-                        operand.getRegData() << 16 | operand.getConstantData();
+                        operand->getRegData() << 16 |
+                        operand->getConstantData();
     return Utils::writeInstruction(os, data, (operandSize + 11) / 8,
                                    currentColumn);
 }

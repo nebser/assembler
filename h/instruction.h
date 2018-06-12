@@ -98,20 +98,62 @@ class SingleAddressInstruction : public Instruction {
    public:
     SingleAddressInstruction(const std::string& name, unsigned char opcode,
                              bool dstExists)
-        : name(name), opcode(opcode), dstExists(dstExists) {}
+        : name(name), opcode(opcode), dstExists(dstExists), operand(nullptr) {}
+
+    ~SingleAddressInstruction() { free(); }
+
+    SingleAddressInstruction(const SingleAddressInstruction& sai) { copy(sai); }
+
+    SingleAddressInstruction(SingleAddressInstruction&& sai) { move(sai); }
+
+    SingleAddressInstruction& operator=(const SingleAddressInstruction& sai) {
+        if (&sai != this) {
+            free();
+            copy(sai);
+        }
+        return *this;
+    }
+
+    SingleAddressInstruction& operator=(SingleAddressInstruction&& sai) {
+        if (&sai != this) {
+            free();
+            move(sai);
+        }
+        return *this;
+    }
 
     Instruction& decode(TokenStream&) override;
     RelocationData* evaluate(const SymbolTable& symbolTable,
                              int instructionLocation,
                              const std::string& mySection) override {
-        return operand.evaluate(symbolTable, instructionLocation, mySection);
+        return operand->evaluate(symbolTable, instructionLocation, mySection);
     }
-    int getSize() const override { return 11 + operand.getSize(); }
+    int getSize() const override { return 11 + operand->getSize(); }
 
     int write(std::ostream&, int currentColumn) const override;
 
    private:
-    Operand operand;
+    void copy(const SingleAddressInstruction& sai) {
+        operand = new Operand(*sai.operand);
+        name = sai.name;
+        opcode = sai.opcode;
+        dstExists = sai.dstExists;
+    }
+
+    void move(SingleAddressInstruction& sai) {
+        operand = sai.operand;
+        name = sai.name;
+        opcode = sai.opcode;
+        dstExists = sai.dstExists;
+        sai.operand = nullptr;
+    }
+
+    void free() {
+        delete operand;
+        operand = nullptr;
+    }
+
+    Operand* operand;
     std::string name;
     unsigned char opcode;
     bool dstExists;
@@ -120,23 +162,69 @@ class SingleAddressInstruction : public Instruction {
 class DoubleAddressInstruction : public Instruction {
    public:
     DoubleAddressInstruction(const std::string& name, unsigned char opcode)
-        : name(name), opcode(opcode) {}
+        : name(name), opcode(opcode), dst(nullptr), src(nullptr) {}
+
+    ~DoubleAddressInstruction() { free(); }
+
+    DoubleAddressInstruction(const DoubleAddressInstruction& dai) { copy(dai); }
+
+    DoubleAddressInstruction(DoubleAddressInstruction&& dai) { move(dai); }
+
+    DoubleAddressInstruction& operator=(const DoubleAddressInstruction& dai) {
+        if (&dai != this) {
+            free();
+            copy(dai);
+        }
+        return *this;
+    }
+
+    DoubleAddressInstruction& operator=(DoubleAddressInstruction&& dai) {
+        if (&dai != this) {
+            free();
+            move(dai);
+        }
+        return *this;
+    }
 
     Instruction& decode(TokenStream&) override;
     RelocationData* evaluate(const SymbolTable& symbolTable,
                              int instructionLocation,
                              const std::string& mySection) override {
-        return dst.getSize() > src.getSize()
-                   ? dst.evaluate(symbolTable, instructionLocation, mySection)
-                   : src.evaluate(symbolTable, instructionLocation, mySection);
+        return dst->getSize() > src->getSize()
+                   ? dst->evaluate(symbolTable, instructionLocation, mySection)
+                   : src->evaluate(symbolTable, instructionLocation, mySection);
     }
-    int getSize() const override { return 6 + dst.getSize() + src.getSize(); }
+    int getSize() const override { return 6 + dst->getSize() + src->getSize(); }
 
     int write(std::ostream&, int currentColumn) const override;
 
    private:
+    void copy(const DoubleAddressInstruction& dai) {
+        dst = new Operand(*dai.dst);
+        src = new Operand(*dai.src);
+        opcode = dai.opcode;
+        name = dai.name;
+    }
+
+    void move(DoubleAddressInstruction& dai) {
+        dst = dai.dst;
+        src = dai.src;
+        opcode = dai.opcode;
+        name = dai.name;
+        dai.dst = nullptr;
+        dai.src = nullptr;
+    }
+
+    void free() {
+        delete src;
+        src = nullptr;
+        delete dst;
+        dst = nullptr;
+    }
+
     std::string name;
-    Operand dst, src;
+    Operand* dst;
+    Operand* src;
     unsigned char opcode;
 };
 
@@ -208,23 +296,65 @@ class JmpInstruction : public Instruction {
     JmpInstruction(const std::string& name, unsigned char prefix)
         : name(name), prefix(prefix), opcode(0) {}
 
+    ~JmpInstruction() { delete operand; }
+
+    JmpInstruction(const JmpInstruction& jmpi) { copy(jmpi); }
+
+    JmpInstruction(JmpInstruction&& jmpi) { move(jmpi); }
+
+    JmpInstruction& operator=(const JmpInstruction& jmpi) {
+        if (&jmpi != this) {
+            free();
+            copy(jmpi);
+        }
+        return *this;
+    }
+
+    JmpInstruction& operator=(JmpInstruction&& jmpi) {
+        if (&jmpi != this) {
+            free();
+            move(jmpi);
+        }
+        return *this;
+    }
+
     Instruction& decode(TokenStream&) override;
 
     RelocationData* evaluate(const SymbolTable& symbolTable,
                              int instructionLocation,
                              const std::string& mySection) override {
-        return operand.evaluate(symbolTable, instructionLocation, mySection);
+        return operand->evaluate(symbolTable, instructionLocation, mySection);
     }
 
     int write(std::ostream&, int currentColumn) const override;
 
-    int getSize() const override { return operand.getSize() + 11; }
+    int getSize() const override { return operand->getSize() + 11; }
 
    private:
+    void copy(const JmpInstruction& jmpi) {
+        operand = new Operand(*jmpi.operand);
+        name = jmpi.name;
+        opcode = jmpi.opcode;
+        prefix = jmpi.prefix;
+    }
+
+    void move(JmpInstruction& jmpi) {
+        operand = jmpi.operand;
+        name = jmpi.name;
+        opcode = jmpi.opcode;
+        prefix = jmpi.prefix;
+        jmpi.operand = nullptr;
+    }
+
+    void free() {
+        delete operand;
+        operand = nullptr;
+    }
+
     std::string name;
     unsigned char prefix;
     unsigned char opcode;
-    Operand operand;
+    Operand* operand;
 };
 
 #endif
