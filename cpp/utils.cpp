@@ -18,7 +18,7 @@ string Utils::uppercaseString(const string& str) {
 int Utils::writeData(ostream& os, unsigned int data, int size,
                      int currentColumn) {
     for (unsigned char i = 0; i < size; i++) {
-        unsigned char d = (data >> i) & 0xFF;
+        unsigned char d = (data >> (i * 8)) & 0xFF;
         currentColumn = writeByte(os, d, currentColumn);
     }
     return currentColumn;
