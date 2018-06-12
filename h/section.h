@@ -1,6 +1,7 @@
 #ifndef SECTION_H_
 #define SECTION_H_
 
+#include <ostream>
 #include <string>
 #include <vector>
 #include "data.h"
@@ -18,21 +19,29 @@ class Section {
 
     std::string getName() const { return name; }
 
-    void addIstruction(WritableData* instruction) {
-        if (type == BSS &&
-            dynamic_cast<WritableDirective*>(instruction)->initialized()) {
+    void addIstruction(const WritableData* instruction) {
+        if (type == BSS && dynamic_cast<const WritableDirective*>(instruction)
+                               ->initialized()) {
             throw DecodingException(
                 "BSS section can only contain uninitalized data");
         }
         instructions.push_back(instruction);
     }
 
+    void addRelocationData(const RelocationData& relData) {
+        relocations.push_back(relData);
+    }
+
+    const Section& writeRelData(std::ostream&) const;
+    const Section& writeContent(std::ostream&) const;
+
    private:
     Type type;
     std::string name;
     unsigned int address;
 
-    std::vector<WritableData*> instructions;
+    std::vector<const WritableData*> instructions;
+    std::vector<RelocationData> relocations;
 };
 
 #endif

@@ -40,8 +40,13 @@ void Assembler::assembleFile(const string& inputFileName,
     cout << "PASSED" << std::endl;
     cout << symbolTable;
     tokenStream.reset();
-    secondPass(tokenStream, startAddress, symbolTable);
-
+    auto sections = secondPass(tokenStream, startAddress, symbolTable);
+    for (auto&& s : sections) {
+        s->writeRelData(cout);
+    }
+    for (auto&& s : sections) {
+        s->writeContent(cout);
+    }
     ofstream output;
     output.open(outputFileName.c_str());
 
@@ -224,6 +229,20 @@ vector<Section*> Assembler::secondPass(TokenStream& tokenStream,
                 auto skipDir = new SkipDirective();
                 locationCounter += skipDir->decode(tokenStream).getSize() / 8;
                 currentSection->addIstruction(skipDir);
+                break;
+            }
+            case Command::INSTRUCTION: {
+                auto instruction = recognizer.recognizeInstruction(command);
+                auto relocationData =
+                    instruction->decode(tokenStream)
+                        .evaluate(symbolTable, locationCounter,
+                                  currentSection->getName());
+                if (relocationData) {
+                    currentSection->addRelocationData(*relocationData);
+                    delete relocationData;
+                }
+                currentSection->addIstruction(instruction);
+                locationCounter += instruction->getSize() / 8;
                 break;
             }
             default:
