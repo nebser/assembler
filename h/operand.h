@@ -25,6 +25,9 @@ class Operand {
     Operand(const std::vector<Token>&,
             const std::vector<AddressMode>& invalidAddressModes = {});
 
+    Operand(const Token& token,
+            const std::vector<AddressMode>& invalidAddressModes = {});
+
     AddressMode getAddressMode() const { return addressMode; }
 
     int getSize() const {
@@ -69,7 +72,10 @@ class Operand {
 
     int getConstantData() const { return constantData & 0xFFFF; }
 
-    RelocationData* evaluate(const SymbolTable&, int instructionLocation,
+    int getFullConstantData() const { return constantData; }
+
+    RelocationData* evaluate(const SymbolTable&, int myLocation,
+                             int nextInstructionLocation,
                              const std::string& mySection);
 
    private:
@@ -84,6 +90,8 @@ class Operand {
     static const std::vector<Registry> registries;
     static std::vector<Registry> constructRegistries();
     static int getRegistry(const std::string&);
+
+    bool isIllegalAddressMode(const std::vector<AddressMode>&) const;
 
     void determineOperand(const std::vector<Token>&);
 

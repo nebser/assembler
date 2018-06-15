@@ -39,9 +39,13 @@ class Definition : public WritableDirective {
 
     WritableDirective& decode(TokenStream&) override;
 
+    std::vector<RelocationData> evaluate(const SymbolTable&,
+                                         int locationCounter,
+                                         const std::string& section);
+
     bool initialized() const override { return datas.size() != 0; }
 
-    int write(std::ostream&, int currentColumn) const override;
+    int write(std::ostream&, int address) const override;
 
     int getSize() const override {
         return (datas.size() == 0 ? multiplier : multiplier * datas.size()) * 8;
@@ -50,7 +54,7 @@ class Definition : public WritableDirective {
    private:
     std::string name;
     int multiplier;
-    std::vector<int> datas;
+    std::vector<Operand> datas;
 };
 
 class SkipDirective : public WritableDirective {
@@ -126,7 +130,8 @@ class SingleAddressInstruction : public Instruction {
     RelocationData* evaluate(const SymbolTable& symbolTable,
                              int instructionLocation,
                              const std::string& mySection) override {
-        return operand->evaluate(symbolTable, instructionLocation, mySection);
+        return operand->evaluate(symbolTable, instructionLocation + 2,
+                                 instructionLocation + 4, mySection);
     }
     int getSize() const override { return 11 + operand->getSize(); }
 
@@ -191,8 +196,10 @@ class DoubleAddressInstruction : public Instruction {
                              int instructionLocation,
                              const std::string& mySection) override {
         return dst->getSize() > src->getSize()
-                   ? dst->evaluate(symbolTable, instructionLocation, mySection)
-                   : src->evaluate(symbolTable, instructionLocation, mySection);
+                   ? dst->evaluate(symbolTable, instructionLocation + 2,
+                                   instructionLocation + 4, mySection)
+                   : src->evaluate(symbolTable, instructionLocation + 2,
+                                   instructionLocation + 4, mySection);
     }
     int getSize() const override { return 6 + dst->getSize() + src->getSize(); }
 
@@ -323,7 +330,8 @@ class JmpInstruction : public Instruction {
     RelocationData* evaluate(const SymbolTable& symbolTable,
                              int instructionLocation,
                              const std::string& mySection) override {
-        return operand->evaluate(symbolTable, instructionLocation, mySection);
+        return operand->evaluate(symbolTable, instructionLocation + 2,
+                                 instructionLocation + 4, mySection);
     }
 
     int write(std::ostream&, int currentColumn) const override;

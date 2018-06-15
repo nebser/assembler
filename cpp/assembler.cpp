@@ -221,9 +221,11 @@ vector<Section*> Assembler::secondPass(TokenStream& tokenStream,
             case Command::DEFINITION: {
                 auto definition =
                     new Definition(recognizer.recognizeDefinition(command));
-                locationCounter +=
-                    definition->decode(tokenStream).getSize() / 8;
+                definition->decode(tokenStream);
+                currentSection->addRelocationData(definition->evaluate(
+                    symbolTable, locationCounter, currentSection->getName()));
                 currentSection->addIstruction(definition);
+                locationCounter += definition->getSize() / 8;
                 break;
             }
             case Command::ALIGN_DIR: {

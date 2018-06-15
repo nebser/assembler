@@ -34,6 +34,8 @@ class Section {
         relocations.push_back(relData);
     }
 
+    void addRelocationData(const std::vector<RelocationData>&);
+
     const Section& writeRelData(std::ostream&) const;
     const Section& writeContent(std::ostream&) const;
 

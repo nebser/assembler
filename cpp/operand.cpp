@@ -38,12 +38,32 @@ Operand::Operand(const vector<Token>& tokens,
                  const vector<AddressMode>& invalidAddressModes)
     : constantDataRaw(UNDEFINED_TOKEN) {
     determineOperand(tokens);
+    if (isIllegalAddressMode(invalidAddressModes)) {
+        throw DecodingException("Invalid address mode for " +
+                                Token::joinTokens(tokens));
+    }
+}
+
+Operand::Operand(const Token& token,
+                 const vector<AddressMode>& invalidAddressModes)
+    : constantDataRaw(UNDEFINED_TOKEN) {
+    std::vector<Token> tokens;
+    tokens.push_back(token);
+    determineOperand(tokens);
+    if (isIllegalAddressMode(invalidAddressModes)) {
+        throw DecodingException("Invalid address mode for " +
+                                Token::joinTokens(tokens));
+    }
+}
+
+bool Operand::isIllegalAddressMode(
+    const vector<AddressMode>& invalidAddressModes) const {
     for (auto&& iam : invalidAddressModes) {
         if (addressMode == iam) {
-            throw DecodingException("Invalid address mode for operand " +
-                                    Token::joinTokens(tokens));
+            return true;
         }
     }
+    return false;
 }
 
 void Operand::determineOperand(const vector<Token>& tokens) {
@@ -126,7 +146,7 @@ void Operand::determineOperand(const vector<Token>& tokens) {
 }
 
 RelocationData* Operand::evaluate(const SymbolTable& symbolTable,
-                                  int instructionLocation,
+                                  int myLocation, int nextInstructionLocation,
                                   const std::string& mySection) {
     switch (addressMode) {
         case IMMEDIATE_CONSTANT:
@@ -144,22 +164,23 @@ RelocationData* Operand::evaluate(const SymbolTable& symbolTable,
             auto symbol = symbolTable.getSymbol(constantDataRaw.getValue());
             auto section = symbolTable.getSection(mySection);
             constantData = symbol.address;
-            return new RelocationData(
-                instructionLocation + 2, RelocationData::APSOLUTE,
-                symbol.scope == SymbolTable::LOCAL ? symbol.section
-                                                   : symbol.number);
+            return new RelocationData(myLocation, RelocationData::APSOLUTE,
+                                      symbol.scope == SymbolTable::LOCAL
+                                          ? symbol.section
+                                          : symbol.number);
         }
         case PC_RELATIVE: {
             auto symbol = symbolTable.getSymbol(constantDataRaw.getValue());
             auto section = symbolTable.getSection(mySection);
-            constantData = symbol.address - 2;
+            constantData =
+                symbol.address - (nextInstructionLocation - myLocation);
             if (section.number == symbol.section) {
                 return nullptr;
             }
-            return new RelocationData(
-                instructionLocation + 2, RelocationData::RELATIVE,
-                symbol.scope == SymbolTable::LOCAL ? symbol.section
-                                                   : symbol.number);
+            return new RelocationData(myLocation, RelocationData::RELATIVE,
+                                      symbol.scope == SymbolTable::LOCAL
+                                          ? symbol.section
+                                          : symbol.number);
         }
     }
 }

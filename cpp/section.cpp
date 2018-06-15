@@ -2,6 +2,7 @@
 #include <ostream>
 using std::endl;
 using std::ostream;
+using std::vector;
 
 const Section& Section::writeRelData(ostream& os) const {
     if (type == BSS) {
@@ -27,6 +28,12 @@ const Section& Section::writeContent(ostream& os) const {
         os << endl;
     }
     return *this;
+}
+
+void Section::addRelocationData(const vector<RelocationData>& relData) {
+    for (auto&& r : relData) {
+        relocations.push_back(r);
+    }
 }
 
 Section::~Section() {

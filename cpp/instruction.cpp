@@ -12,13 +12,9 @@ WritableDirective& Definition::decode(TokenStream& tokenStream) {
     }
     auto secondToken = tokenStream.next();
     while (true) {
-        auto t = firstToken.getType();
-        if (t != Token::BIN_NUMBER && t != Token::DEC_NUMBER &&
-            t != Token::HEX_NUMBER) {
-            throw DecodingException(
-                "Data can be initialized only with numbers");
-        }
-        datas.push_back(firstToken.getIntValue());
+        datas.push_back(Operand(
+            firstToken, {REG_DIRECT, REG_INDIRECT_W_DISPL, MEMORY_CONSTANT,
+                         MEMORY_SYMBOL, PC_RELATIVE, PSW}));
         if (secondToken.getType() == Token::LINE_DELIMITER) {
             return *this;
         }
@@ -30,13 +26,32 @@ WritableDirective& Definition::decode(TokenStream& tokenStream) {
     }
 }
 
+vector<RelocationData> Definition::evaluate(const SymbolTable& symbolTable,
+                                            int address,
+                                            const std::string& section) {
+    vector<RelocationData> relData;
+    auto cnt = 0;
+    auto size = getSize();
+    for (auto&& data : datas) {
+        auto displ = cnt * multiplier;
+        auto r = data.evaluate(symbolTable, address + displ, address + size,
+                               section);
+        if (r != nullptr) {
+            relData.push_back(*r);
+            delete r;
+        }
+        cnt++;
+    }
+    return relData;
+}
+
 int Definition::write(ostream& os, int currentColumn) const {
     if (datas.size() == 0) {
         return Utils::writeData(os, 0, multiplier, currentColumn);
     } else {
         for (auto&& data : datas) {
-            currentColumn =
-                Utils::writeData(os, data, multiplier, currentColumn);
+            currentColumn = Utils::writeData(os, data.getFullConstantData(),
+                                             multiplier, currentColumn);
         }
     }
     return currentColumn;
