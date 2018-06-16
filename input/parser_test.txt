@@ -20,26 +20,26 @@ SBR:
     retal
 
 _START:
-    add r1, r2
-    call SBR
-    add test, r1
-    mov r4, r3
-    add r1, $test
+    addal r1, r2
+    calleq SBR
+    addne test, r1
+    movgt r4, r3
+    addal r1, $test
 
 LABELA:    
-    mov r4, 0x05
-    mov r5, 0010101b
-    add r6, 20
-    add r6, &beta
+    moval r4, 0x05
+    moveq r5, 0010101b
+    addne r6, 20
+    addgt r6, &beta
     jmpgt $LABELA
     cmp r6, test
     mulgt r6, r1
     diveq r6, long
     oral r6, r6
-    and r6, psw
-    shl r7, 2
-    shr r7, 2
+    andeq r6, psw
+    shlal r7, 2
+    shrne r7, 2
     ;shl 0, r3
-    sub r1, $nesto
+    subal r1, $nesto
 
 .end

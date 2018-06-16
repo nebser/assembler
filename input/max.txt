@@ -1,0 +1,49 @@
+.global result
+.data
+    array: .word 1400, 50, 20, 10, 0x17
+    array_end: .char
+    .align 2
+
+.text
+    MAX:
+        pushal r5
+        moval r5, r6
+        pushal r1
+        pushal r4
+        moval r0, r5[2]
+        moval r1, r5[4]
+        jmpeq END
+
+        moval r4, 0xFFFF
+    LOOP:
+        cmpal r0[0], r4
+        movgt r4, r0[0]
+        addal r0, 2
+        cmpal r0, r1
+        jmpne LOOP
+
+        moval r0, r4
+
+    END:
+        popal r4
+        popal r1
+        popal r5
+        retal
+
+    WRITE_CHAR:
+        pushal r0
+        moval *0xFFFE, r0
+        shral r0, 8
+        moval *0xFFFE, r0
+        popal r0
+        retal
+
+    _START:
+        pushal array_end
+        pushal array
+        call MAX
+        addal r7, 4
+        call WRITE_CHAR
+
+.end
+

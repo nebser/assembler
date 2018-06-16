@@ -1,0 +1,25 @@
+.global message
+.rodata
+    message: .char 'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd', '!', 0
+    .align 2
+
+.text
+    WRITE_MESSAGE:
+        pushal r1
+        pushal r2
+        moval r2, 0x10
+    WRITE:
+        moval r1, r0[0]
+        movne *0xFFFE, r1
+        addne r0, 1
+        jmpne $WRITE
+        moveq *0xFFFE, r2
+        popal r2
+        popal r1
+        retal
+
+    _START:
+        moval r0, message
+        call WRITE_MESSAGE
+
+.end
