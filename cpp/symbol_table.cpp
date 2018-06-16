@@ -92,6 +92,16 @@ void SymbolTable::updateSectionSize(const string& sectionName,
     }
 }
 
+void SymbolTable::updateRelocationSectionSize(const string& sectionName,
+                                              unsigned int sectionSize) {
+    for (auto&& section : sections) {
+        if (section.name == sectionName) {
+            section.relocationSectionSize = sectionSize;
+            return;
+        }
+    }
+}
+
 int SymbolTable::getCummulativeSectionSize() const {
     auto sum = 0;
     for (auto&& section : sections) {
@@ -110,11 +120,11 @@ void SymbolTable::setSymbolNumbers() {
 
 ostream& operator<<(ostream& os, const SymbolTable& symbolTable) {
     os << "#tabela simbola" << endl;
-    os << "#rbr\ttip\time\tsek\tvr\tvid\tvel" << endl;
+    os << "#rbr\ttip\time\tsek\tvr\tvid\tvel\tvel_rel" << endl;
     for (auto&& section : symbolTable.sections) {
         os << section.number << "\tSEK\t" << section.name << '\t'
            << section.number << '\t' << section.address << "\tL\t"
-           << section.size << endl;
+           << section.size << '\t' << section.relocationSectionSize << endl;
     }
     auto numOfSections = symbolTable.sections.size();
     for (auto&& symbol : symbolTable.symbols) {

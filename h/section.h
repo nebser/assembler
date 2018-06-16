@@ -36,6 +36,10 @@ class Section {
 
     void addRelocationData(const std::vector<RelocationData>&);
 
+    unsigned int getRelocationSectionSize() const {
+        return relocations.size() * 4;
+    }
+
     const Section& writeRelData(std::ostream&) const;
     const Section& writeContent(std::ostream&) const;
 

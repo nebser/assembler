@@ -37,7 +37,7 @@ class RelocationData {
     Type getType() const { return type; }
 
     std::string getTypeDescription() const {
-        return type == APSOLUTE ? "R_386_32" : "R_386_PC32";
+        return type == APSOLUTE ? "A" : "R";
     }
 
     unsigned int getValue() const { return value; }

@@ -50,6 +50,11 @@ void Assembler::assembleFile(const string& inputFileName,
     tokenStream.reset();
     auto sections = secondPass(tokenStream, startAddress, symbolTable);
 
+    for (auto&& s : sections) {
+        symbolTable.updateRelocationSectionSize(s->getName(),
+                                                s->getRelocationSectionSize());
+    }
+
     // Writing to output
     ofstream output;
     output.open(outputFileName.c_str());
@@ -268,8 +273,6 @@ vector<Section*> Assembler::secondPass(TokenStream& tokenStream,
 void Assembler::write(const vector<Section*>& sections, ostream& os) const {
     for (auto&& s : sections) {
         s->writeRelData(os);
-    }
-    for (auto&& s : sections) {
         s->writeContent(os);
     }
 }

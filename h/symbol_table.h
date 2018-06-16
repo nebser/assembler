@@ -35,10 +35,15 @@ class SymbolTable {
         int size;
         int number;
         unsigned int address;
+        unsigned int relocationSectionSize;
 
         Section(const std::string& name, unsigned int address,
                 unsigned int number, int size)
-            : name(name), address(address), size(size), number(number) {}
+            : name(name),
+              address(address),
+              size(size),
+              number(number),
+              relocationSectionSize(0) {}
     };
 
     SymbolTable() { lastSection = 0; }
@@ -63,6 +68,8 @@ class SymbolTable {
     }
 
     void updateSectionSize(const std::string& sectionName, int sectionSize);
+    void updateRelocationSectionSize(const std::string& sectionName,
+                                     unsigned int relocationSectionSize);
     int getCummulativeSectionSize() const;
 
     void setSymbolNumbers();
