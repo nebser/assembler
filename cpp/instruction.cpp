@@ -213,7 +213,9 @@ Instruction& DoubleAddressInstruction::decode(TokenStream& tokenStream) {
             src = new Operand(srcTokens);
             if (src->getSize() + dst->getSize() > 26) {
                 throw DecodingException(
-                    "Only one operand can have additional data for operands");
+                    "Only one operand can have additional data for operands " +
+                    Token::joinTokens(srcTokens) + " " +
+                    Token::joinTokens(dstTokens));
             }
             return *this;
         }

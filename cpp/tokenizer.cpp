@@ -244,6 +244,7 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                     case ']':
                         tokens.push_back(
                             createDecimalNumberToken(pendingToken));
+                        tokens.push_back(createCharBasedToken(character));
                         pendingToken.clear();
                         state = CLOSED_BRACKETS_DETECTED;
                         break;
@@ -299,6 +300,12 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                         tokens.push_back(createHexNumberToken(pendingToken));
                         end = true;
                         break;
+                    case ',':
+                        tokens.push_back(createHexNumberToken(pendingToken));
+                        pendingToken.clear();
+                        tokens.push_back(createCharBasedToken(character));
+                        state = HUNTING;
+                        break;
                     default:
                         throw ParserException(
                             pendingToken + string(1, character), lineNumber);
@@ -344,6 +351,8 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                 break;
             case CLOSED_BRACKETS_DETECTED:
                 switch (character) {
+                    case ',':
+                        tokens.push_back(createCharBasedToken(character));
                     case ' ':
                     case '\t':
                         state = HUNTING;
