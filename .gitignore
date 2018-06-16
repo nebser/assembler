@@ -6,7 +6,6 @@
 .DS_Store
 
 # input and output folders
-input/
 output/
 
 # Compiled Object files

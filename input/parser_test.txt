@@ -1,0 +1,45 @@
+.global test, long, nesto, random
+.data
+    test: .char 5
+    long: .long 20, test, 10
+    .align 2
+    .word random
+    beta: .word 5
+
+.bss
+    .skip 20
+
+.text
+SBR:
+    pushal r4
+    pushal r5
+    subal r1, r2
+    noteq r2, r2
+    moval r4, 4
+    addal r1, r4[long]
+    retal
+
+_START:
+    add r1, r2
+    call SBR
+    add test, r1
+    mov r4, r3
+    add r1, $test
+
+LABELA:    
+    mov r4, 0x05
+    mov r5, 0010101b
+    add r6, 20
+    add r6, &beta
+    jmpgt $LABELA
+    cmp r6, test
+    mulgt r6, r1
+    diveq r6, long
+    oral r6, r6
+    and r6, psw
+    shl r7, 2
+    shr r7, 2
+    ;shl 0, r3
+    sub r1, $nesto
+
+.end
