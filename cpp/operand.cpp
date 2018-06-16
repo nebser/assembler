@@ -139,6 +139,14 @@ void Operand::determineOperand(const vector<Token>& tokens) {
             constantDataRaw = tokens[0];
             return;
         }
+        case Token::ASCI_CHARACTER:
+            if (tokens.size() != 1) {
+                throw DecodingException("Invalid operand " +
+                                        Token::joinTokens(tokens));
+            }
+            addressMode = IMMEDIATE_CONSTANT;
+            constantData = tokens[0].getValue()[0];
+            return;
         default:
             throw DecodingException("Invalid operand " +
                                     Token::joinTokens(tokens));

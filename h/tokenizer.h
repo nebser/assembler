@@ -71,6 +71,7 @@ class Tokenizer {
         BIN_NUMERIC_DETECTION,
         BIN_NUMERIC_DETECTED,
         CLOSED_BRACKETS_DETECTED,
+        ASCI_DETECTION,
         LABEL_DETECTION
     };
 
@@ -98,6 +99,10 @@ class Tokenizer {
 
     Token createNewLineToken() const {
         return Token(Token::LINE_DELIMITER, "\n");
+    }
+
+    Token createAsciToken(const std::string& value) const {
+        return Token(Token::ASCI_CHARACTER, value);
     }
 };
 

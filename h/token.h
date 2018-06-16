@@ -21,6 +21,7 @@ class Token {
         LABEL,
         LINE_DELIMITER,
         LOCATION_VALUE_QUANT,
+        ASCI_CHARACTER,
         UNDEFINED
     };
 
@@ -70,6 +71,8 @@ class Token {
                 return "New line character";
             case LOCATION_VALUE_QUANT:
                 return "Location value quantificator (*)";
+            case ASCI_CHARACTER:
+                return "Asci character";
             case UNDEFINED:
                 return "Undefined token";
         }

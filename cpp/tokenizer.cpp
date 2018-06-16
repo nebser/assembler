@@ -67,6 +67,9 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                     case '*':
                         tokens.push_back(createCharBasedToken(character));
                         break;
+                    case '\'':
+                        state = ASCI_DETECTION;
+                        break;
                     default:
                         pendingToken += character;
                         state = IDENTIFICATOR_DETECTION;
@@ -370,6 +373,22 @@ vector<Token> Tokenizer::parse(const std::string& input, int lineNumber) const {
                         throw ParserException(
                             pendingToken + ":" + string(1, character),
                             lineNumber);
+                }
+                break;
+            case ASCI_DETECTION:
+                switch (character) {
+                    case '\'':
+                        tokens.push_back(createAsciToken(pendingToken));
+                        pendingToken.clear();
+                        state = HUNTING;
+                        break;
+                    default:
+                        if (pendingToken.size() == 1) {
+                            throw ParserException(
+                                pendingToken + string(1, character),
+                                lineNumber);
+                        }
+                        pendingToken += character;
                 }
                 break;
             default:
