@@ -14,7 +14,7 @@ WritableDirective& Definition::decode(TokenStream& tokenStream) {
     while (true) {
         datas.push_back(Operand(
             firstToken, {REG_DIRECT, REG_INDIRECT_W_DISPL, MEMORY_CONSTANT,
-                         MEMORY_SYMBOL, PC_RELATIVE, PSW}));
+                         IMMEDIATE_SYMBOL, PC_RELATIVE, PSW}));
         if (secondToken.getType() == Token::LINE_DELIMITER) {
             return *this;
         }
