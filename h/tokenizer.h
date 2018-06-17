@@ -12,7 +12,8 @@ class Feeder {
     Feeder(const std::string& input) : input(input), currentIndex(0) {}
 
     char feed() {
-        if (currentIndex == input.size() || input[currentIndex] == ';') {
+        if (currentIndex == input.size() || input[currentIndex] == ';' ||
+            input[currentIndex] == '\r') {
             return 0;
         }
         auto nextCharacter = input[currentIndex];
