@@ -180,11 +180,12 @@ RelocationData* Operand::evaluate(const SymbolTable& symbolTable,
         case PC_RELATIVE: {
             auto symbol = symbolTable.getSymbol(constantDataRaw.getValue());
             auto section = symbolTable.getSection(mySection);
-            constantData =
-                symbol.address - (nextInstructionLocation - myLocation);
             if (section.number == symbol.section) {
+                constantData = symbol.address - nextInstructionLocation;
                 return nullptr;
             }
+            constantData =
+                symbol.address - (nextInstructionLocation - myLocation);
             return new RelocationData(myLocation, RelocationData::RELATIVE,
                                       symbol.scope == SymbolTable::LOCAL
                                           ? symbol.section
