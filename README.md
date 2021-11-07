@@ -1,4 +1,4 @@
-# project-june-2018
+# ARM-like Assembler
 ## Description
 A very primitive assembler example implemented in c++, much similar to the ARM assembler, only simplified.
 ## Requirements:
